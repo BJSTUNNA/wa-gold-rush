@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WA Gold Rush</title>
+    style.css
+</head>
+<body>
+  
+<div class="container">
+    
+    <h1>⛏️ WA Gold Rush</h1>
+    
+    <h2>Cash: $<span id="cash">100.00</span></h2>
+
+    <h2>Round: <span id="round">1</span>/10</h2>
+
+    <hr>
+
+    <label>Investment Amount</label>
+
+    <input
+      type="number"
+      id="investment"
+      value="10"
+      min="1"
+    >
+
+    <br><br>
+
+    <label>Select Dig Type</label>
+
+    <select id="dig">
+        <option value="safe">Safe Dig (10%)</option>
+        <option value="medium">Medium Dig (50%)</option>
+        <option value="deep">Deep Vein Dig (300%)</option>
+    </select>
+
+    <br><br>
+
+    <button onclick="playRound()">
+        Roll Dice
+    </button>
+
+    <hr>
+
+    <h3>Dice Roll</h3>
+
+    <p id="dice">-</p>
+
+    <h3>Result</h3>
+
+    <p id="result">Start mining!</p>
+
+</div>
+
+script.jsscript>
+
+</body>
+</html>
