@@ -1,6 +1,10 @@
 let cash = 100;
 let round = 1;
 
+function rollDice() {
+    return Math.floor(Math.random() * 6) + 1;
+}
+
 function playRound() {
 
     if (round > 10) {
@@ -8,57 +12,56 @@ function playRound() {
         return;
     }
 
-    const investment = Number(
-        document.getElementById("investment").value
-    );
+    const investment =
+        Number(document.getElementById("investment").value);
 
     const digType =
         document.getElementById("dig").value;
 
-    if (investment > cash) {
-        alert("Not enough cash.");
+    if (investment <= 0) {
+        alert("Enter a valid investment.");
         return;
     }
 
-    const d1 =
-        Math.floor(Math.random() * 6) + 1;
+    if (investment > cash) {
+        alert("You do not have enough cash.");
+        return;
+    }
 
-    const d2 =
-        Math.floor(Math.random() * 6) + 1;
+    const die1 = rollDice();
+    const die2 = rollDice();
+    const total = die1 + die2;
 
-    const total = d1 + d2;
-
+    let profit = 0;
     let message = "";
 
     if (digType === "safe") {
 
-        const profit = investment * 0.10;
+        profit = investment * 0.10;
 
         cash += profit;
 
         message =
-            `Safe Dig successful. Profit $${profit.toFixed(2)}`;
-
+            `Safe Dig successful! Profit: $${profit.toFixed(2)}`;
     }
 
     else if (digType === "medium") {
 
         if (total >= 7 && total <= 10) {
 
-            const profit = investment * 0.50;
+            profit = investment * 0.50;
 
             cash += profit;
 
             message =
-                `Medium Dig successful. Profit $${profit.toFixed(2)}`;
+                `Medium Dig successful! Profit: $${profit.toFixed(2)}`;
 
-        }
-        else {
+        } else {
 
             cash -= investment;
 
             message =
-                `Medium Dig failed. Lost $${investment.toFixed(2)}`;
+                `Medium Dig failed! Lost: $${investment.toFixed(2)}`;
         }
     }
 
@@ -66,41 +69,40 @@ function playRound() {
 
         if (total === 11 || total === 12) {
 
-            const profit = investment * 3;
+            profit = investment * 3;
 
             cash += profit;
 
             message =
-                `Deep Vein successful. Profit $${profit.toFixed(2)}`;
+                `Deep Vein Dig successful! Profit: $${profit.toFixed(2)}`;
 
-        }
-        else {
+        } else {
 
             cash -= investment;
 
             message =
-                `Deep Vein failed. Lost $${investment.toFixed(2)}`;
+                `Deep Vein Dig failed! Lost: $${investment.toFixed(2)}`;
         }
     }
 
-    document.getElementById("dice").innerHTML =
-        `${d1} + ${d2} = ${total}`;
+    document.getElementById("dice").innerText =
+        `${die1} + ${die2} = ${total}`;
 
-    document.getElementById("result").innerHTML =
+    document.getElementById("result").innerText =
         message;
 
-    document.getElementById("cash").innerHTML =
+    document.getElementById("cash").innerText =
         cash.toFixed(2);
 
     round++;
 
-    document.getElementById("round").innerHTML =
+    document.getElementById("round").innerText =
         Math.min(round, 10);
 
     if (round > 10) {
 
         document.getElementById("result").innerHTML +=
-            `<br><br><strong>Game Over!</strong>
-             <br>Final Cash: $${cash.toFixed(2)}`;
+            `<br><br><strong>GAME OVER</strong><br>
+             Final Cash: $${cash.toFixed(2)}`;
     }
 }
