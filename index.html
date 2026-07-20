@@ -8,42 +8,42 @@
 </head>
 <body>
 
-<div class="container">
+    <div class="container">
 
-    <h1>⛏️ WA Gold Rush</h1>
+        <h1>⛏️ WA Gold Rush</h1>
 
-    <h2>Cash: $<span id="cash">100.00</span></h2>
+        <h2>Cash: $<span id="cash">100.00</span></h2>
 
-    <h2>Round: <span id="round">1</span>/10</h2>
+        <h2>Round: <span id="round">1</span>/10</h2>
 
-    <label>Investment Amount</label><br>
-    <input type="number" id="investment" value="10" min="1">
+        <label for="investment">Investment Amount</label><br>
+        <input type="number" id="investment" value="10" min="1">
 
-    <br><br>
+        <br><br>
 
-    <label>Select Dig Type</label><br>
+        <label for="dig">Select Dig Type</label><br>
 
-    <select id="dig">
-        <option value="safe">Safe Dig (10%)</option>
-        <option value="medium">Medium Dig (50%)</option>
-        <option value="deep">Deep Vein Dig (300%)</option>
-    </select>
+        <select id="dig">
+            <option value="safe">Safe Dig (10%)</option>
+            <option value="medium">Medium Dig (50%)</option>
+            <option value="deep">Deep Vein Dig (300%)</option>
+        </select>
 
-    <br><br>
+        <br><br>
 
-    <button onclick="playRound()">Roll Dice</button>
+        <button onclick="playRound()">Roll Dice</button>
 
-    <hr>
+        <hr>
 
-    <h3>Dice Roll</h3>
-    <p id="dice">-</p>
+        <h3>Dice Roll</h3>
+        <p id="dice">-</p>
 
-    <h3>Result</h3>
-    <p id="result">Start mining!</p>
+        <h3>Result</h3>
+        <p id="result">Start mining!</p>
 
-</div>
+    </div>
 
-script.js</script>
+    script.js
 
 </body>
 </html>
