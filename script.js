@@ -103,6 +103,6 @@ function playRound() {
 
         document.getElementById("result").innerHTML +=
             `<br><br><strong>GAME OVER</strong><br>
-             Final Cash: $${cash.toFixed(2)}`;
+            Final Cash: $${cash.toFixed(2)}`;
     }
 }
