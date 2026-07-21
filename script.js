@@ -226,6 +226,10 @@ function playRound() {
     }
 function restartGame() {
 
+    if (!confirm("Are you sure you want to restart the game?")) {
+        return;
+    }
+
     cash = 100;
     round = 1;
 
