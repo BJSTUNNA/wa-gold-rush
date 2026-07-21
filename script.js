@@ -36,39 +36,49 @@ function playRound() {
     let profit = 0;
     let message = "";
 
-    // SAFE DIG
+    // Display dice immediately
+    document.getElementById("dice").innerHTML =
+        `🎲 Dice 1: <strong>${die1}</strong><br>
+         🎲 Dice 2: <strong>${die2}</strong><br>
+         ➕ Total: <strong>${total}</strong>`;
+
+    // Safe Dig
     if (digType === "safe") {
 
         profit = investment * 0.10;
-
         cash += profit;
 
         message =
-            `Safe Dig successful!\nProfit: $${profit.toFixed(2)}`;
+            `✅ Safe Dig Successful<br>
+             Investment: $${investment.toFixed(2)}<br>
+             Profit: $${profit.toFixed(2)}`;
+
     }
 
-    // MEDIUM DIG
+    // Medium Dig
     else if (digType === "medium") {
 
         if (total >= 7 && total <= 10) {
 
             profit = investment * 0.50;
-
             cash += profit;
 
             message =
-                `Medium Dig successful!\nProfit: $${profit.toFixed(2)}`;
+                `✅ Medium Dig Successful<br>
+                 Investment: $${investment.toFixed(2)}<br>
+                 Profit: $${profit.toFixed(2)}`;
 
         } else {
 
             cash -= investment;
 
             message =
-                `Medium Dig failed!\nLost: $${investment.toFixed(2)}`;
+                `❌ Medium Dig Failed<br>
+                 Lost: $${investment.toFixed(2)}`;
         }
     }
 
-    // DEEP VEIN DIG
+    // Deep Vein Dig
     else if (digType === "deep") {
 
         if (total === 11 || total === 12) {
@@ -78,21 +88,21 @@ function playRound() {
             cash += profit;
 
             message =
-                `Deep Vein Dig successful!\nProfit: $${profit.toFixed(2)}`;
+                `💰 Deep Vein Dig Successful!<br>
+                 Investment: $${investment.toFixed(2)}<br>
+                 Profit: $${profit.toFixed(2)}`;
 
         } else {
 
             cash -= investment;
 
             message =
-                `Deep Vein Dig failed!\nLost: $${investment.toFixed(2)}`;
+                `❌ Deep Vein Dig Failed<br>
+                 Lost: $${investment.toFixed(2)}`;
         }
     }
 
-    document.getElementById("dice").innerText =
-        `${die1} + ${die2} = ${total}`;
-
-    document.getElementById("result").innerText =
+    document.getElementById("result").innerHTML =
         message;
 
     document.getElementById("cash").innerText =
@@ -106,7 +116,8 @@ function playRound() {
     if (round > 10) {
 
         document.getElementById("result").innerHTML +=
-            `<br><br><strong>GAME OVER!</strong><br>
-            Final Cash: $${cash.toFixed(2)}`;
+            `<br><br>
+             <strong>🏁 GAME OVER</strong><br>
+             Final Cash: $${cash.toFixed(2)}`;
     }
 }
