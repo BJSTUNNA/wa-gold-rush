@@ -224,4 +224,16 @@ function playRound() {
     } catch (error) {
         alert(error.message);
     }
+function restartGame() {
+
+    cash = 100;
+    round = 1;
+
+    document.getElementById("cash").innerText = "100.00";
+    document.getElementById("round").innerText = "1";
+    document.getElementById("dice").innerHTML = "-";
+    document.getElementById("result").innerHTML = "Start mining!";
+
+    document.getElementById("investment").value = "10";
+    document.getElementById("dig").value = "safe";
 }
