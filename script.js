@@ -2,6 +2,7 @@
 const MAX_ROUNDS = 10;
 const DICE_SIDES = 6;
 const INITIAL_CASH = 100;
+const ANIMATION_DURATION = 1000; // milliseconds
 
 const DIG_TYPES = {
     safe: {
@@ -112,6 +113,30 @@ function generateResultMessage(digType, investment, profit, success) {
     }
 }
 
+function animateDiceRoll() {
+    const diceEl = document.getElementById('dice');
+    if (!diceEl) return;
+
+    diceEl.classList.add('rolling');
+
+    // Generate random numbers during animation
+    const interval = setInterval(() => {
+        const die1 = rollDice();
+        const die2 = rollDice();
+        const total = die1 + die2;
+        diceEl.innerHTML =
+            `🎲 Dice 1: <strong>${die1}</strong><br>
+             🎲 Dice 2: <strong>${die2}</strong><br>
+             ➕ Total: <strong>${total}</strong>`;
+    }, 100);
+
+    // Stop animation after duration
+    setTimeout(() => {
+        clearInterval(interval);
+        diceEl.classList.remove('rolling');
+    }, ANIMATION_DURATION);
+}
+
 function displayDiceRoll(die1, die2, total) {
     const diceEl = document.getElementById('dice');
     if (diceEl) {
@@ -162,7 +187,7 @@ function resetGame() {
 }
 
 // ===== MAIN GAME LOGIC =====
-function playRound() {
+async function playRound() {
     try {
         if (gameState.round > MAX_ROUNDS || gameState.gameOver) {
             alert('Game Over! Click "Restart Game" to play again.');
@@ -172,10 +197,18 @@ function playRound() {
         const investment = getInvestmentAmount();
         const digType = getSelectedDigType();
 
+        // Start dice animation
+        animateDiceRoll();
+
+        // Roll the actual dice
         const die1 = rollDice();
         const die2 = rollDice();
         const total = die1 + die2;
 
+        // Wait for animation to complete
+        await new Promise(resolve => setTimeout(resolve, ANIMATION_DURATION));
+
+        // Display final dice roll
         displayDiceRoll(die1, die2, total);
 
         const { profit, success } = calculateOutcome(digType, total, investment);
