@@ -10,21 +10,24 @@ const DIG_TYPES = {
         multiplier: 0.10,
         minTotal: 0,
         maxTotal: Infinity,
-        icon: '✅'
+        icon: '✅',
+        inputId: 'investment-safe'
     },
     medium: {
         name: 'Medium Dig',
         multiplier: 0.50,
         minTotal: 7,
         maxTotal: 10,
-        icon: '⚠️'
+        icon: '⚠️',
+        inputId: 'investment-medium'
     },
     deep: {
         name: 'Deep Vein Dig',
         multiplier: 3,
         minTotal: 11,
         maxTotal: 12,
-        icon: '💰'
+        icon: '💰',
+        inputId: 'investment-deep'
     }
 };
 
@@ -54,6 +57,14 @@ document.addEventListener('DOMContentLoaded', function() {
         resetBtn.addEventListener('click', resetGame);
     }
 
+    // Add listeners to investment inputs to update total
+    Object.values(DIG_TYPES).forEach(dig => {
+        const input = document.getElementById(dig.inputId);
+        if (input) {
+            input.addEventListener('input', updateTotalInvestment);
+        }
+    });
+
     updateUI();
 });
 
@@ -69,28 +80,44 @@ function updateUI() {
     if (roundEl) roundEl.innerText = Math.min(gameState.round, MAX_ROUNDS);
 }
 
-function getInvestmentAmount() {
-    const input = document.getElementById('investment');
-    const amount = input ? Number(input.value) : NaN;
-
-    if (isNaN(amount)) {
-        throw new Error('Invalid investment amount.');
-    }
-
-    if (amount <= 0) {
-        throw new Error('Enter a valid investment amount greater than 0.');
-    }
-
-    if (amount > gameState.cash) {
-        throw new Error('You do not have enough cash.');
-    }
-
-    return amount;
+function updateTotalInvestment() {
+    let total = 0;
+    Object.values(DIG_TYPES).forEach(dig => {
+        const input = document.getElementById(dig.inputId);
+        if (input) {
+            total += Number(input.value) || 0;
+        }
+    });
+    
+    const totalEl = document.getElementById('total-investment');
+    if (totalEl) totalEl.innerText = total.toFixed(2);
 }
 
-function getSelectedDigType() {
-    const sel = document.getElementById('dig');
-    return sel ? sel.value : 'safe';
+function getInvestments() {
+    const investments = {};
+    let totalInvestment = 0;
+
+    Object.entries(DIG_TYPES).forEach(([key, dig]) => {
+        const input = document.getElementById(dig.inputId);
+        const amount = input ? Number(input.value) : 0;
+
+        if (isNaN(amount) || amount < 0) {
+            throw new Error('Invalid investment amount.');
+        }
+
+        investments[key] = amount;
+        totalInvestment += amount;
+    });
+
+    if (totalInvestment <= 0) {
+        throw new Error('Allocate at least some cash to a dig type.');
+    }
+
+    if (totalInvestment > gameState.cash) {
+        throw new Error('You do not have enough cash for this total investment.');
+    }
+
+    return investments;
 }
 
 function calculateOutcome(digType, total, investment) {
@@ -155,13 +182,34 @@ function displayDiceRoll(die1, die2, total) {
     }
 }
 
+function displayResults(results) {
+    const resultsContainer = document.getElementById('results-container');
+    if (resultsContainer) {
+        let html = '';
+        let totalProfit = 0;
+
+        results.forEach(result => {
+            html += `<div class="result-card">${result.message}</div>`;
+            totalProfit += result.profit;
+        });
+
+        html += `<div class="result-summary">
+                    <strong>Round Profit/Loss: ${totalProfit >= 0 ? '+' : ''}$${totalProfit.toFixed(2)}</strong>
+                 </div>`;
+
+        resultsContainer.innerHTML = html;
+    }
+}
+
 function displayGameOver() {
-    const resultEl = document.getElementById('result');
-    if (resultEl) {
-        resultEl.innerHTML +=
+    const resultsContainer = document.getElementById('results-container');
+    if (resultsContainer) {
+        resultsContainer.innerHTML +=
             `<br><br>
-             <strong>🏁 GAME OVER</strong><br>
-             Final Cash: $${gameState.cash.toFixed(2)}`;
+             <div class="result-summary">
+                 <strong>🏁 GAME OVER</strong><br>
+                 Final Cash: $${gameState.cash.toFixed(2)}
+             </div>`;
     }
     gameState.gameOver = true;
     const playBtn = document.getElementById('playButton');
@@ -179,20 +227,22 @@ function resetGame() {
     gameState.round = 1;
     gameState.gameOver = false;
 
-    const investmentEl = document.getElementById('investment');
-    const digEl = document.getElementById('dig');
-    const playBtn = document.getElementById('playButton');
+    // Reset investment inputs
+    Object.values(DIG_TYPES).forEach(dig => {
+        const input = document.getElementById(dig.inputId);
+        if (input) input.value = '0';
+    });
 
-    if (investmentEl) investmentEl.value = '10';
-    if (digEl) digEl.value = 'safe';
+    const playBtn = document.getElementById('playButton');
     if (playBtn) playBtn.disabled = false;
 
     updateUI();
+    updateTotalInvestment();
 
     const diceEl = document.getElementById('dice');
-    const resultEl = document.getElementById('result');
+    const resultsContainer = document.getElementById('results-container');
     if (diceEl) diceEl.innerHTML = '-';
-    if (resultEl) resultEl.innerHTML = 'Start mining!';
+    if (resultsContainer) resultsContainer.innerHTML = '<p id="result">Start mining!</p>';
 }
 
 // ===== MAIN GAME LOGIC =====
@@ -214,10 +264,10 @@ function playRound() {
         const playBtn = document.getElementById('playButton');
         if (playBtn) playBtn.disabled = true;
 
-        const investment = getInvestmentAmount();
-        const digType = getSelectedDigType();
+        const investments = getInvestments();
+        const totalInvestment = Object.values(investments).reduce((a, b) => a + b, 0);
 
-        console.log('Investment:', investment, 'Dig Type:', digType);
+        console.log('Investments:', investments, 'Total:', totalInvestment);
 
         // Roll the actual dice
         const die1 = rollDice();
@@ -234,13 +284,22 @@ function playRound() {
             // Display final dice roll
             displayDiceRoll(die1, die2, total);
 
-            const { profit, success } = calculateOutcome(digType, total, investment);
+            // Calculate outcomes for each dig type
+            const results = [];
+            let roundProfit = 0;
 
-            gameState.cash += profit;
+            Object.entries(investments).forEach(([digType, investment]) => {
+                if (investment > 0) {
+                    const { profit, success } = calculateOutcome(digType, total, investment);
+                    const message = generateResultMessage(digType, investment, profit, success);
+                    results.push({ digType, message, profit, success, investment });
+                    roundProfit += profit;
+                }
+            });
 
-            const message = generateResultMessage(digType, investment, profit, success);
-            const resultEl = document.getElementById('result');
-            if (resultEl) resultEl.innerHTML = message;
+            gameState.cash += roundProfit;
+
+            displayResults(results);
 
             updateUI();
             gameState.round++;

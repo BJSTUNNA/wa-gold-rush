@@ -16,20 +16,28 @@
 
         <h2>Round: <span id="round">1</span>/10</h2>
 
-        <label for="investment">Investment Amount</label><br>
-        <input type="number" id="investment" value="10" min="1">
+        <h3>Allocate Your Investments</h3>
+        
+        <div class="investment-grid">
+            <div class="investment-box">
+                <label for="investment-safe">Safe Dig (10%)</label>
+                <input type="number" id="investment-safe" value="0" min="0">
+            </div>
 
-        <br><br>
+            <div class="investment-box">
+                <label for="investment-medium">Medium Dig (50%)</label>
+                <input type="number" id="investment-medium" value="0" min="0">
+            </div>
 
-        <label for="dig">Select Dig Type</label><br>
+            <div class="investment-box">
+                <label for="investment-deep">Deep Vein Dig (300%)</label>
+                <input type="number" id="investment-deep" value="0" min="0">
+            </div>
+        </div>
 
-        <select id="dig">
-            <option value="safe">Safe Dig (10%)</option>
-            <option value="medium">Medium Dig (50%)</option>
-            <option value="deep">Deep Vein Dig (300%)</option>
-        </select>
+        <p class="total-investment">Total Investment: $<span id="total-investment">0.00</span></p>
 
-        <br><br>
+        <br>
 
         <!-- Give the buttons IDs so script.js can attach listeners -->
         <button id="playButton" type="button">Roll Dice</button>
@@ -43,8 +51,10 @@
         <h3>Dice Roll</h3>
         <p id="dice">-</p>
 
-        <h3>Result</h3>
-        <p id="result">Start mining!</p>
+        <h3>Results</h3>
+        <div id="results-container">
+            <p id="result">Start mining!</p>
+        </div>
 
     </div>
 
