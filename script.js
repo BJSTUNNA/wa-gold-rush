@@ -36,37 +36,33 @@ const gameState = {
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('playButton').addEventListener('click', playRound);
-    document.getElementById('resetButton').addEventListener('click', resetGame);
+    const playBtn = document.getElementById('playButton');
+    const resetBtn = document.getElementById('resetButton');
+
+    if (!playBtn) console.warn('playButton not found in DOM');
+    else playBtn.addEventListener('click', playRound);
+
+    if (!resetBtn) console.warn('resetButton not found in DOM');
+    else resetBtn.addEventListener('click', resetGame);
+
     updateUI();
 });
 
 // ===== UTILITY FUNCTIONS =====
-
-/**
- * Roll a single dice
- * @returns {number} Random number between 1 and 6
- */
 function rollDice() {
     return Math.floor(Math.random() * DICE_SIDES) + 1;
 }
 
-/**
- * Update the UI with current game state
- */
 function updateUI() {
-    document.getElementById('cash').innerText = gameState.cash.toFixed(2);
-    document.getElementById('round').innerText = Math.min(gameState.round, MAX_ROUNDS);
+    const cashEl = document.getElementById('cash');
+    const roundEl = document.getElementById('round');
+    if (cashEl) cashEl.innerText = gameState.cash.toFixed(2);
+    if (roundEl) roundEl.innerText = Math.min(gameState.round, MAX_ROUNDS);
 }
 
-/**
- * Get and validate investment amount from input
- * @throws {Error} If investment is invalid or insufficient funds
- * @returns {number} Valid investment amount
- */
 function getInvestmentAmount() {
     const input = document.getElementById('investment');
-    const amount = Number(input.value);
+    const amount = input ? Number(input.value) : NaN;
 
     if (isNaN(amount)) {
         throw new Error('Invalid investment amount.');
@@ -83,21 +79,11 @@ function getInvestmentAmount() {
     return amount;
 }
 
-/**
- * Get selected dig type from dropdown
- * @returns {string} The dig type value
- */
 function getSelectedDigType() {
-    return document.getElementById('dig').value;
+    const sel = document.getElementById('dig');
+    return sel ? sel.value : 'safe';
 }
 
-/**
- * Calculate profit and success based on dig type and dice total
- * @param {string} digType - Type of dig (safe, medium, deep)
- * @param {number} total - Sum of two dice rolls
- * @param {number} investment - Amount invested
- * @returns {Object} { profit: number, success: boolean }
- */
 function calculateOutcome(digType, total, investment) {
     const dig = DIG_TYPES[digType];
 
@@ -111,17 +97,8 @@ function calculateOutcome(digType, total, investment) {
     return { profit, success };
 }
 
-/**
- * Generate result message
- * @param {string} digType - Type of dig
- * @param {number} investment - Investment amount
- * @param {number} profit - Profit or loss amount
- * @param {boolean} success - Whether dig was successful
- * @returns {string} HTML message
- */
 function generateResultMessage(digType, investment, profit, success) {
     const dig = DIG_TYPES[digType];
-    const profitText = success ? `+$${profit.toFixed(2)}` : `-$${Math.abs(profit).toFixed(2)}`;
     const icon = success ? dig.icon : '❌';
 
     if (success) {
@@ -135,88 +112,83 @@ function generateResultMessage(digType, investment, profit, success) {
     }
 }
 
-/**
- * Display dice roll results
- * @param {number} die1 - First dice value
- * @param {number} die2 - Second dice value
- * @param {number} total - Sum of dice
- */
 function displayDiceRoll(die1, die2, total) {
-    document.getElementById('dice').innerHTML =
-        `🎲 Dice 1: <strong>${die1}</strong><br>
-         🎲 Dice 2: <strong>${die2}</strong><br>
-         ➕ Total: <strong>${total}</strong>`;
+    const diceEl = document.getElementById('dice');
+    if (diceEl) {
+        diceEl.innerHTML =
+            `🎲 Dice 1: <strong>${die1}</strong><br>
+             🎲 Dice 2: <strong>${die2}</strong><br>
+             ➕ Total: <strong>${total}</strong>`;
+    }
 }
 
-/**
- * Display game over message
- */
 function displayGameOver() {
-    document.getElementById('result').innerHTML +=
-        `<br><br>
-         <strong>🏁 GAME OVER</strong><br>
-         Final Cash: $${gameState.cash.toFixed(2)}`;
+    const resultEl = document.getElementById('result');
+    if (resultEl) {
+        resultEl.innerHTML +=
+            `<br><br>
+             <strong>🏁 GAME OVER</strong><br>
+             Final Cash: $${gameState.cash.toFixed(2)}`;
+    }
     gameState.gameOver = true;
-    document.getElementById('playButton').disabled = true;
+    const playBtn = document.getElementById('playButton');
+    if (playBtn) playBtn.disabled = true;
 }
 
-/**
- * Reset the game to initial state
- */
+// Reset the game to initial state
 function resetGame() {
+    if (!confirm("Are you sure you want to restart the game?")) {
+        return;
+    }
+
     gameState.cash = INITIAL_CASH;
     gameState.round = 1;
     gameState.gameOver = false;
 
-    document.getElementById('investment').value = '10';
-    document.getElementById('dig').value = 'safe';
-    document.getElementById('playButton').disabled = false;
+    const investmentEl = document.getElementById('investment');
+    const digEl = document.getElementById('dig');
+    const playBtn = document.getElementById('playButton');
+
+    if (investmentEl) investmentEl.value = '10';
+    if (digEl) digEl.value = 'safe';
+    if (playBtn) playBtn.disabled = false;
+
     updateUI();
 
-    document.getElementById('dice').innerHTML = '-';
-    document.getElementById('result').innerHTML = 'Start mining!';
+    const diceEl = document.getElementById('dice');
+    const resultEl = document.getElementById('result');
+    if (diceEl) diceEl.innerHTML = '-';
+    if (resultEl) resultEl.innerHTML = 'Start mining!';
 }
 
 // ===== MAIN GAME LOGIC =====
-
-/**
- * Play a single round of the game
- */
 function playRound() {
     try {
-        // Check if game is already over
-        if (gameState.round > MAX_ROUNDS) {
-            alert('Game Over! Click "Reset Game" to play again.');
+        if (gameState.round > MAX_ROUNDS || gameState.gameOver) {
+            alert('Game Over! Click "Restart Game" to play again.');
             return;
         }
 
-        // Validate input
         const investment = getInvestmentAmount();
         const digType = getSelectedDigType();
 
-        // Roll dice
         const die1 = rollDice();
         const die2 = rollDice();
         const total = die1 + die2;
 
-        // Display dice
         displayDiceRoll(die1, die2, total);
 
-        // Calculate outcome
         const { profit, success } = calculateOutcome(digType, total, investment);
 
-        // Update cash
         gameState.cash += profit;
 
-        // Display result
         const message = generateResultMessage(digType, investment, profit, success);
-        document.getElementById('result').innerHTML = message;
+        const resultEl = document.getElementById('result');
+        if (resultEl) resultEl.innerHTML = message;
 
-        // Update UI
         updateUI();
         gameState.round++;
 
-        // Check if game is over
         if (gameState.round > MAX_ROUNDS) {
             displayGameOver();
         }
@@ -224,20 +196,4 @@ function playRound() {
     } catch (error) {
         alert(error.message);
     }
-function restartGame() {
-
-    if (!confirm("Are you sure you want to restart the game?")) {
-        return;
-    }
-
-    cash = 100;
-    round = 1;
-
-    document.getElementById("cash").innerText = "100.00";
-    document.getElementById("round").innerText = "1";
-    document.getElementById("dice").innerHTML = "-";
-    document.getElementById("result").innerHTML = "Start mining!";
-
-    document.getElementById("investment").value = "10";
-    document.getElementById("dig").value = "safe";
 }
