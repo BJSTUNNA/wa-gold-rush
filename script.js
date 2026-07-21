@@ -32,19 +32,27 @@ const DIG_TYPES = {
 const gameState = {
     cash: INITIAL_CASH,
     round: 1,
-    gameOver: false
+    gameOver: false,
+    isRolling: false
 };
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up event listeners');
     const playBtn = document.getElementById('playButton');
     const resetBtn = document.getElementById('resetButton');
 
     if (!playBtn) console.warn('playButton not found in DOM');
-    else playBtn.addEventListener('click', playRound);
+    else {
+        console.log('Attaching click handler to playButton');
+        playBtn.addEventListener('click', playRound);
+    }
 
     if (!resetBtn) console.warn('resetButton not found in DOM');
-    else resetBtn.addEventListener('click', resetGame);
+    else {
+        console.log('Attaching click handler to resetButton');
+        resetBtn.addEventListener('click', resetGame);
+    }
 
     updateUI();
 });
@@ -162,6 +170,7 @@ function displayGameOver() {
 
 // Reset the game to initial state
 function resetGame() {
+    console.log('Reset game called');
     if (!confirm("Are you sure you want to restart the game?")) {
         return;
     }
@@ -187,46 +196,68 @@ function resetGame() {
 }
 
 // ===== MAIN GAME LOGIC =====
-async function playRound() {
+function playRound() {
+    console.log('playRound called');
+    
+    if (gameState.isRolling) {
+        console.log('Already rolling, ignoring click');
+        return;
+    }
+
     try {
         if (gameState.round > MAX_ROUNDS || gameState.gameOver) {
             alert('Game Over! Click "Restart Game" to play again.');
             return;
         }
 
+        gameState.isRolling = true;
+        const playBtn = document.getElementById('playButton');
+        if (playBtn) playBtn.disabled = true;
+
         const investment = getInvestmentAmount();
         const digType = getSelectedDigType();
 
-        // Start dice animation
-        animateDiceRoll();
+        console.log('Investment:', investment, 'Dig Type:', digType);
 
         // Roll the actual dice
         const die1 = rollDice();
         const die2 = rollDice();
         const total = die1 + die2;
 
+        console.log('Dice rolled:', die1, die2, 'Total:', total);
+
+        // Start dice animation
+        animateDiceRoll();
+
         // Wait for animation to complete
-        await new Promise(resolve => setTimeout(resolve, ANIMATION_DURATION));
+        setTimeout(() => {
+            // Display final dice roll
+            displayDiceRoll(die1, die2, total);
 
-        // Display final dice roll
-        displayDiceRoll(die1, die2, total);
+            const { profit, success } = calculateOutcome(digType, total, investment);
 
-        const { profit, success } = calculateOutcome(digType, total, investment);
+            gameState.cash += profit;
 
-        gameState.cash += profit;
+            const message = generateResultMessage(digType, investment, profit, success);
+            const resultEl = document.getElementById('result');
+            if (resultEl) resultEl.innerHTML = message;
 
-        const message = generateResultMessage(digType, investment, profit, success);
-        const resultEl = document.getElementById('result');
-        if (resultEl) resultEl.innerHTML = message;
+            updateUI();
+            gameState.round++;
 
-        updateUI();
-        gameState.round++;
+            if (gameState.round > MAX_ROUNDS) {
+                displayGameOver();
+            }
 
-        if (gameState.round > MAX_ROUNDS) {
-            displayGameOver();
-        }
+            gameState.isRolling = false;
+            if (playBtn) playBtn.disabled = false;
+        }, ANIMATION_DURATION);
 
     } catch (error) {
+        console.error('Error in playRound:', error);
         alert(error.message);
+        gameState.isRolling = false;
+        const playBtn = document.getElementById('playButton');
+        if (playBtn) playBtn.disabled = false;
     }
 }
