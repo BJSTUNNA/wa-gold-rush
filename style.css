@@ -29,3 +29,23 @@ select {
     padding: 8px;
     width: 250px;
 }
+.restart-btn {
+    background-color: #2e7d32;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-left: 10px;
+    transition: 0.3s;
+}
+
+.restart-btn:hover {
+    background-color: #1b5e20;
+    transform: scale(1.05);
+}
+
+.restart-btn:active {
+    transform: scale(0.95);
+}
