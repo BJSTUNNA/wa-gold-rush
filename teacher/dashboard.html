@@ -102,9 +102,12 @@
 
         function getRecords() {
             try {
-                const records = JSON.parse(localStorage.getItem(CLASS_RECORDS_KEY));
+                const raw = localStorage.getItem(CLASS_RECORDS_KEY);
+                if (!raw) return [];
+                const records = JSON.parse(raw);
                 return Array.isArray(records) ? records : [];
             } catch (error) {
+                console.error('Failed to load class records:', error);
                 return [];
             }
         }
@@ -118,7 +121,9 @@
             let paused = false;
             try {
                 paused = !!JSON.parse(localStorage.getItem(PAUSE_STATE_KEY))?.paused;
-            } catch (error) {}
+            } catch (error) {
+                console.error('Failed to load pause state:', error);
+            }
             document.getElementById('pauseStatus').textContent = paused
                 ? 'Gameplay is currently paused.'
                 : 'Gameplay is active.';
@@ -201,12 +206,12 @@
         });
 
         document.getElementById('pauseClassBtn').addEventListener('click', () => {
-            localStorage.setItem(PAUSE_STATE_KEY, JSON.stringify({ paused: true, updatedAt: new Date().toISOString() }));
+            localStorage.setItem(PAUSE_STATE_KEY, JSON.stringify({ paused: true }));
             refresh();
         });
 
         document.getElementById('resumeClassBtn').addEventListener('click', () => {
-            localStorage.setItem(PAUSE_STATE_KEY, JSON.stringify({ paused: false, updatedAt: new Date().toISOString() }));
+            localStorage.setItem(PAUSE_STATE_KEY, JSON.stringify({ paused: false }));
             refresh();
         });
 

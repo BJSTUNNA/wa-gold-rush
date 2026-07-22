@@ -446,6 +446,7 @@ function playRound() {
             );
             results.push({
                 mineName: mine.name,
+                digKey: digType,
                 digType: dig.name,
                 icon: dig.icon,
                 amount: numericAmount,
@@ -534,7 +535,14 @@ function hydrateIdentityInputs() {
 function getOrCreatePlayerKey() {
     let key = localStorage.getItem(PLAYER_KEY_STORAGE);
     if (!key) {
-        key = `player_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        key = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : `player_${Date.now()}_${(() => {
+                if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+                    return Array.from(crypto.getRandomValues(new Uint32Array(2))).join('_');
+                }
+                return `${Math.random().toString(36).slice(2, 12)}_${Math.random().toString(36).slice(2, 12)}`;
+            })()}`;
         localStorage.setItem(PLAYER_KEY_STORAGE, key);
     }
     return key;
@@ -557,9 +565,9 @@ function calculateStrategyLabel() {
     const totals = { safe: 0, medium: 0, deep: 0 };
     gameState.roundHistory.forEach(round => {
         (round.results || []).forEach(result => {
-            if (result.digType?.toLowerCase().includes('safe')) totals.safe += result.amount || 0;
-            if (result.digType?.toLowerCase().includes('medium')) totals.medium += result.amount || 0;
-            if (result.digType?.toLowerCase().includes('deep')) totals.deep += result.amount || 0;
+            if (result.digKey && Object.prototype.hasOwnProperty.call(totals, result.digKey)) {
+                totals[result.digKey] += result.amount || 0;
+            }
         });
     });
     const max = Math.max(totals.safe, totals.medium, totals.deep);
