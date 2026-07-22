@@ -24,12 +24,12 @@ function getAssignedLevelFromUrl() {
 
 function getAssignedLevelLabel(level) {
     const labels = {
-        2: 'Level 2 Tycoon Mode',
+        2: 'Level 2 Goldfields Venture Mode',
         3: 'Level 3 WA Goldfields Mode',
         4: 'Level 4 Advanced Operations Mode',
         5: 'Level 5 Classroom Challenge Mode'
     };
-    return labels[level] || 'Level 2 Tycoon Mode';
+    return labels[level] || 'Level 2 Goldfields Venture Mode';
 }
 
 function updateAssignedLevelBadge() {
@@ -59,14 +59,6 @@ function isMachineryAllowed(machineryId, level = gameState?.assignedLevel || 2) 
     return getAllowedMachineryIds(level).includes(machineryId);
 }
 
-function getProgressionLevel() {
-    const round = Number(gameState?.round) || 1;
-    if (round >= 40) return 5;
-    if (round >= 20) return 4;
-    if (round >= 10) return 3;
-    return 2;
-}
-
 function shouldRollRandomEvent() {
     const assignedLevel = gameState?.assignedLevel || 2;
     if (assignedLevel < RANDOM_EVENT_MIN_LEVEL) {
@@ -76,15 +68,30 @@ function shouldRollRandomEvent() {
     return gameState.round % RANDOM_EVENT_ROLL_INTERVAL === 0;
 }
 
+function resolveConfigPath() {
+    const currentPath = window.location.pathname || '';
+    if (currentPath.includes('/blob/') || currentPath.includes('/tree/')) {
+        return null;
+    }
+    return '../../shared/game-config.json';
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     gameState = new GameState();
     gameState.assignedLevel = getAssignedLevelFromUrl();
     gameState.isMineUpgradeAllowed = (upgradeId, level = gameState.assignedLevel) => isMineUpgradeAllowed(upgradeId, level);
     gameState.isMachineryAllowed = (machineryId, level = gameState.assignedLevel) => isMachineryAllowed(machineryId, level);
     gameState.canRollRandomEvents = (level = gameState.assignedLevel) => level >= RANDOM_EVENT_MIN_LEVEL;
-    const configLoaded = await gameState.loadConfig('../../shared/game-config.json');
+
+    const configPath = resolveConfigPath();
+    if (!configPath) {
+        alert('This game cannot run from a GitHub file preview. Please use GitHub Pages or a local web server.');
+        return;
+    }
+
+    const configLoaded = await gameState.loadConfig(configPath);
     if (!configLoaded) {
-        alert('Failed to load game configuration. Please refresh the page.');
+        alert(`Failed to load game configuration from ${configPath}. Please use GitHub Pages or a local web server and try again.`);
         return;
     }
 
