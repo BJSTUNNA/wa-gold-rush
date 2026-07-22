@@ -7,10 +7,29 @@ const CLASS_RECORDS_KEY = 'wa_gold_rush_class_records';
 const PAUSE_STATE_KEY = 'wa_gold_rush_pause_state';
 const PLAYER_KEY_STORAGE = 'wa_gold_rush_player_key';
 const DEFAULT_COMPANY_NAME = 'Untitled Mining Co.';
+const RANDOM_EVENT_MIN_LEVEL = 4;
+const RANDOM_EVENT_ROLL_INTERVAL = 10;
 
 let gameState = null;
 let currentMineForInvestment = null;
 let pendingPurchase = null;
+
+function getProgressionLevel() {
+    const round = Number(gameState?.round) || 1;
+    if (round >= 40) return 5;
+    if (round >= 20) return 4;
+    if (round >= 10) return 3;
+    return 2;
+}
+
+function shouldRollRandomEvent() {
+    const progressionLevel = getProgressionLevel();
+    if (progressionLevel < RANDOM_EVENT_MIN_LEVEL) {
+        return false;
+    }
+
+    return gameState.round % RANDOM_EVENT_ROLL_INTERVAL === 0;
+}
 
 document.addEventListener('DOMContentLoaded', async function() {
     gameState = new GameState();
@@ -424,7 +443,7 @@ function playRound() {
         return;
     }
 
-    const { event } = rollRoundEvent();
+    const { event } = shouldRollRandomEvent() ? rollRoundEvent() : { event: null };
     const roundEffects = getRoundEffects(event);
 
     const die1 = Math.floor(Math.random() * 6) + 1;
