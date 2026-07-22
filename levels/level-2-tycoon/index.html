@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WA Gold Rush - Level 2: Mining Tycoon</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="game-header">
+            <div class="header-left">
+                <h1>⛏️ Mining Tycoon</h1>
+                <p class="level-badge">Level 2</p>
+            </div>
+            <nav class="header-nav">
+                <a href="../../index.html" class="btn-nav">← Home</a>
+            </nav>
+        </header>
+
+        <!-- MAIN STATS BAR -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label">Cash</span>
+                <span class="stat-value" id="cash">$100.00</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Net Worth</span>
+                <span class="stat-value" id="netWorth">$100.00</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Mines Owned</span>
+                <span class="stat-value" id="minesOwned">1</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Machinery</span>
+                <span class="stat-value" id="machineryCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Round</span>
+                <span class="stat-value" id="round">1</span>
+            </div>
+        </div>
+
+        <!-- MAIN GAME AREA (Two columns) -->
+        <div class="main-content">
+            
+            <!-- LEFT COLUMN: Mines & Investments -->
+            <div class="left-panel">
+                <section class="panel-section">
+                    <h2>🏭 Your Mines</h2>
+                    <div id="mines-container" class="mines-grid">
+                        <!-- Dynamically populated -->
+                    </div>
+                </section>
+
+                <!-- MINE SHOP -->
+                <section class="panel-section">
+                    <h2>🛒 Purchase New Mine</h2>
+                    <div id="mine-shop" class="shop-grid">
+                        <!-- Dynamically populated -->
+                    </div>
+                </section>
+
+                <!-- ROLL DICE SECTION -->
+                <section class="panel-section dice-section">
+                    <h3>🎲 Roll Dice</h3>
+                    <p id="dice-display">-</p>
+                    <button id="rollButton" class="btn-primary btn-large">Roll Dice & Mine</button>
+                    <div id="results-container" class="results-display">
+                        <p id="result-text">Allocate investments to begin mining.</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- RIGHT COLUMN: Machinery & Upgrades -->
+            <div class="right-panel">
+                
+                <!-- MACHINERY SECTION -->
+                <section class="panel-section">
+                    <h2>🚜 Machinery</h2>
+                    <div id="machinery-list" class="machinery-list">
+                        <p class="empty-state">No machinery owned yet.</p>
+                    </div>
+                </section>
+
+                <!-- MACHINERY SHOP -->
+                <section class="panel-section">
+                    <h2>⚙️ Purchase Machinery</h2>
+                    <div id="machinery-shop" class="shop-grid">
+                        <!-- Dynamically populated -->
+                    </div>
+                </section>
+
+                <!-- STATS SUMMARY -->
+                <section class="panel-section stats-summary">
+                    <h2>📊 Financial Summary</h2>
+                    <div class="summary-row">
+                        <span>Cash:</span>
+                        <span class="summary-value" id="summary-cash">$100.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Mine Value:</span>
+                        <span class="summary-value" id="summary-mines">$100.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Machinery Value:</span>
+                        <span class="summary-value" id="summary-machinery">$0.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Net Worth:</span>
+                        <span class="summary-value" id="summary-networth">$200.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Total Profit/Loss:</span>
+                        <span class="summary-value" id="summary-total">$0.00</span>
+                    </div>
+                </section>
+
+                <!-- CONTROLS -->
+                <section class="panel-section">
+                    <button id="saveButton" class="btn-secondary">💾 Save Game</button>
+                    <button id="loadButton" class="btn-secondary">📂 Load Game</button>
+                    <button id="resetButton" class="btn-danger">🔄 New Game</button>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Mine Details & Upgrades -->
+    <div id="mineModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="modalMineTitle">Mine Details</h2>
+            
+            <div class="modal-body">
+                <div class="mine-details">
+                    <p id="modalMineDesc"></p>
+                    <p id="modalMaxInvestment"></p>
+                </div>
+
+                <h3>Mine Upgrades</h3>
+                <div id="modalUpgrades" class="upgrade-list">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <h3>Investment Allocation</h3>
+                <div id="modalInvestments" class="investment-grid">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Purchase Confirmation -->
+    <div id="purchaseModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="purchaseTitle">Confirm Purchase</h2>
+            <p id="purchaseDesc"></p>
+            <p id="purchasePrice"></p>
+            <div class="modal-buttons">
+                <button id="confirmPurchase" class="btn-primary">Confirm</button>
+                <button id="cancelPurchase" class="btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../shared/game-config.json" type="application/json" id="config"></script>
+    <script src="game-state.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
