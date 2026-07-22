@@ -14,6 +14,28 @@ let gameState = null;
 let currentMineForInvestment = null;
 let pendingPurchase = null;
 
+function getAssignedLevelFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const level = Number(params.get('level'));
+    return [2, 3, 4, 5].includes(level) ? level : 2;
+}
+
+function getAssignedLevelLabel(level) {
+    const labels = {
+        2: 'Level 2 Tycoon Mode',
+        3: 'Level 3 WA Goldfields Mode',
+        4: 'Level 4 Advanced Operations Mode',
+        5: 'Level 5 Classroom Challenge Mode'
+    };
+    return labels[level] || 'Level 2 Tycoon Mode';
+}
+
+function updateAssignedLevelBadge() {
+    const badge = document.querySelector('.level-badge');
+    if (!badge) return;
+    badge.textContent = getAssignedLevelLabel(gameState?.assignedLevel || 2);
+}
+
 function getProgressionLevel() {
     const round = Number(gameState?.round) || 1;
     if (round >= 40) return 5;
@@ -33,6 +55,7 @@ function shouldRollRandomEvent() {
 
 document.addEventListener('DOMContentLoaded', async function() {
     gameState = new GameState();
+    gameState.assignedLevel = getAssignedLevelFromUrl();
     const configLoaded = await gameState.loadConfig('../../shared/game-config.json');
     if (!configLoaded) {
         alert('Failed to load game configuration. Please refresh the page.');
@@ -40,10 +63,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     gameState.loadFromLocalStorage();
+    gameState.assignedLevel = getAssignedLevelFromUrl();
     ensureInvestmentPlansForOwnedMines();
     hydrateIdentityInputs();
     setupEventListeners();
     updatePauseStateFromStorage();
+    updateAssignedLevelBadge();
     updateAllUI();
     syncPlayerRecord();
 });
@@ -258,6 +283,7 @@ function renderLeaderboard() {
 }
 
 function updateAllUI() {
+    updateAssignedLevelBadge();
     ensureInvestmentPlansForOwnedMines();
     renderMines();
     renderMineShop();
@@ -665,8 +691,10 @@ function loadGame() {
         alert('❌ No save data found');
         return;
     }
+    gameState.assignedLevel = getAssignedLevelFromUrl();
     ensureInvestmentPlansForOwnedMines();
     hydrateIdentityInputs();
+    updateAssignedLevelBadge();
     updateAllUI();
     closeAllModals();
     syncPlayerRecord();
@@ -676,8 +704,10 @@ function loadGame() {
 function resetGame() {
     if (!confirm('Start a new game? All progress will be lost.')) return;
     gameState.reset();
+    gameState.assignedLevel = getAssignedLevelFromUrl();
     localStorage.removeItem('level2_autosave');
     hydrateIdentityInputs();
+    updateAssignedLevelBadge();
     updateAllUI();
     closeAllModals();
     syncPlayerRecord();
