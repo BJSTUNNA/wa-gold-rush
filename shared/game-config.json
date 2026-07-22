@@ -16,7 +16,7 @@
       "description": "Multiple mines, upgrades, machinery, unending growth",
       "maxRounds": null,
       "roundsUnending": true,
-      "startingCash": 100,
+      "startingCash": 200,
       "features": ["multiple_mines", "mine_upgrades", "machinery", "net_worth", "unending_rounds"]
     },
     "3": {
@@ -24,7 +24,7 @@
       "description": "Strategic expansion across named WA regions",
       "maxRounds": null,
       "roundsUnending": true,
-      "startingCash": 100,
+      "startingCash": 200,
       "features": ["regional_mines", "location_strategy", "regional_limits"]
     },
     "4": {
@@ -32,7 +32,7 @@
       "description": "Random events, company mode, high-risk regions",
       "maxRounds": null,
       "roundsUnending": true,
-      "startingCash": 100,
+      "startingCash": 200,
       "features": ["random_events", "company_mode", "high_risk_regions"]
     },
     "5": {
@@ -40,7 +40,7 @@
       "description": "Multiplayer leaderboards and class competition",
       "maxRounds": null,
       "roundsUnending": true,
-      "startingCash": 100,
+      "startingCash": 200,
       "features": ["multiplayer", "leaderboards", "class_stats", "teacher_dashboard"]
     }
   },
