@@ -11,12 +11,16 @@
         <header class="game-header">
             <div class="header-left">
                 <h1>⛏️ Mining Tycoon</h1>
-                <p class="level-badge">Level 2</p>
+                <p class="level-badge">Levels 2–5 Tycoon Mode</p>
             </div>
             <nav class="header-nav">
                 <a href="../../index.html" class="btn-nav">← Home</a>
             </nav>
         </header>
+
+        <div id="pause-banner" class="pause-banner hidden">
+            ⏸️ Game paused by teacher.
+        </div>
 
         <!-- MAIN STATS BAR -->
         <div class="stats-bar">
@@ -49,6 +53,7 @@
             <div class="left-panel">
                 <section class="panel-section">
                     <h2>🏭 Your Mines</h2>
+                    <p class="panel-note">Click a mine to set this round's investment plan and buy upgrades.</p>
                     <div id="mines-container" class="mines-grid">
                         <!-- Dynamically populated -->
                     </div>
@@ -84,6 +89,16 @@
                     </div>
                 </section>
 
+                <section class="panel-section">
+                    <h2>🏢 Company & Student Identity</h2>
+                    <div class="identity-grid">
+                        <label>Student ID <input id="studentIdInput" type="text" maxlength="30" placeholder="e.g. STU001"></label>
+                        <label>Student Name <input id="studentNameInput" type="text" maxlength="50" placeholder="e.g. Alex"></label>
+                        <label>Company Name <input id="companyNameInput" type="text" maxlength="50" placeholder="e.g. Perth Prospectors"></label>
+                    </div>
+                    <button id="saveIdentityButton" class="btn-secondary">Save Identity</button>
+                </section>
+
                 <!-- MACHINERY SHOP -->
                 <section class="panel-section">
                     <h2>⚙️ Purchase Machinery</h2>
@@ -117,6 +132,17 @@
                     </div>
                 </section>
 
+                <section class="panel-section">
+                    <h2>🧭 Progression Features & Costs</h2>
+                    <div id="features-costs"></div>
+                </section>
+
+                <section class="panel-section">
+                    <h2>🏆 Local Classroom Leaderboard</h2>
+                    <div id="leaderboard-summary" class="leaderboard-summary"></div>
+                    <div id="leaderboard-list"></div>
+                </section>
+
                 <!-- CONTROLS -->
                 <section class="panel-section">
                     <button id="saveButton" class="btn-secondary">💾 Save Game</button>
@@ -148,6 +174,7 @@
                 <div id="modalInvestments" class="investment-grid">
                     <!-- Dynamically populated -->
                 </div>
+                <button id="saveMinePlanButton" class="btn-primary">Save Mine Plan</button>
             </div>
         </div>
     </div>
@@ -166,8 +193,8 @@
         </div>
     </div>
 
-    <script src="../../shared/game-config.json" type="application/json" id="config"></script>
     <script src="game-state.js"></script>
+    <script src="../../teacher/dashboard-state.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
