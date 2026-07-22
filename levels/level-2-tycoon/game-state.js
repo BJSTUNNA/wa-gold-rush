@@ -8,6 +8,7 @@ class GameState {
         this.round = 1;
         this.cash = 100;
         this.gameConfig = null;
+        this.assignedLevel = 2;
         this.player = {
             studentId: '',
             studentName: '',
@@ -50,6 +51,33 @@ class GameState {
             console.error('Failed to load game config:', error);
             return false;
         }
+    }
+
+    getAllowedMineUpgradeIds(level = this.assignedLevel || 2) {
+        const order = ['silver', 'gold', 'platinum'];
+        if (level <= 2) return [];
+        if (level === 3) return order.slice(0, 1);
+        if (level === 4) return order.slice(0, 2);
+        return [...order];
+    }
+
+    getAllowedMachineryIds(level = this.assignedLevel || 2) {
+        const order = ['excavator', 'drilling_rig', 'super_drill'];
+        if (level <= 2) return order.slice(0, 1);
+        if (level === 3) return order.slice(0, 2);
+        return [...order];
+    }
+
+    isMineUpgradeAllowed(upgradeId, level = this.assignedLevel || 2) {
+        return this.getAllowedMineUpgradeIds(level).includes(upgradeId);
+    }
+
+    isMachineryAllowed(machineryId, level = this.assignedLevel || 2) {
+        return this.getAllowedMachineryIds(level).includes(machineryId);
+    }
+
+    canRollRandomEvents(level = this.assignedLevel || 2) {
+        return level >= 4;
     }
 
     /**
@@ -138,6 +166,10 @@ class GameState {
         if (!mine?.owned) {
             return { success: false, error: 'Mine not owned' };
         }
+
+        if (!this.isMineUpgradeAllowed(upgradeId)) {
+            return { success: false, error: `Upgrade ${upgrade.name} is locked for Level ${this.assignedLevel}` };
+        }
         
         if (this.cash < upgrade.cost) {
             return { success: false, error: `Insufficient funds. Need $${upgrade.cost}, have $${this.cash}` };
@@ -167,6 +199,10 @@ class GameState {
         
         if (!machinery) {
             return { success: false, error: 'Machinery not found' };
+        }
+
+        if (!this.isMachineryAllowed(machineryId)) {
+            return { success: false, error: `${machinery.name} is locked for Level ${this.assignedLevel}` };
         }
         
         // Check purchase limit
@@ -345,6 +381,7 @@ class GameState {
         return {
             round: this.round,
             cash: this.cash,
+            assignedLevel: this.assignedLevel,
             player: this.player,
             ownedMines: this.getOwnedMines(),
             machinery: this.machinery.map(item => this.gameConfig.machinery[item.id]),
@@ -367,6 +404,7 @@ class GameState {
                 gameState: {
                     round: this.round,
                     cash: this.cash,
+                    assignedLevel: this.assignedLevel,
                     player: this.player,
                     ownedMines: this.ownedMines,
                     machinery: this.machinery,
@@ -394,6 +432,7 @@ class GameState {
             
             this.round = saveData.gameState.round;
             this.cash = saveData.gameState.cash;
+            this.assignedLevel = saveData.gameState.assignedLevel || this.assignedLevel;
             this.player = {
                 ...this.player,
                 ...(saveData.gameState.player || {})
@@ -416,6 +455,7 @@ class GameState {
     reset() {
         this.round = 1;
         this.cash = this.gameConfig?.levels?.['2']?.startingCash || 100;
+        this.assignedLevel = 2;
         this.player = {
             studentId: '',
             studentName: '',
