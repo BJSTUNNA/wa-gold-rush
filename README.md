@@ -1,4 +1,4 @@
-# WA Gold Rush - Educational Mathematics Game
+# Goldfields Goldrush W.A. - Educational Mathematics Game
 
 A progressive financial mathematics simulation game for students, themed around Western Australian gold mining.
 
@@ -13,7 +13,7 @@ wa-gold-rush/
 │   │   ├── index.html
 │   │   ├── script.js
 │   │   └── style.css
-│   └── level-2-tycoon/          # Active Tycoon mode (bundles Levels 2-5 progression)
+│   └── level-2-tycoon/          # Active Goldfields Venture mode (bundles Levels 2-5 progression)
 │
 ├── shared/                       # Shared utilities across levels
 │   ├── game-config.json         # Game configuration & assets
@@ -33,8 +33,8 @@ wa-gold-rush/
 | Level | Name | Description | Duration | Features |
 |-------|------|-------------|----------|----------|
 | 1 | Basic Mining | Original game - single mine, 10 rounds fixed | 10 min | Dice rolls, 3 dig types |
-| 2 | Mining Tycoon | Multiple mines, upgrades, machinery, resale | Unending | Net worth + event system |
-| 3 | WA Regions | Southern Cross, Coolgardie, Kalgoorlie progression | Unending | Regional strategy |
+| 2 | Goldfields Venture | Multiple mines, upgrades, machinery, resale | Unending | Net worth + event system |
+| 3 | WA Goldfields | Southern Cross, Coolgardie, Kalgoorlie progression | Unending | Regional strategy |
 | 4 | Advanced | Company mode, random events, advanced risk | Unending | Strategic planning |
 | 5 | Classroom Challenge | Shared local leaderboard + teacher stats/pause | Ongoing | Classroom competition |
 
@@ -58,7 +58,7 @@ The original working game - preserved as-is for reference and student access.
 
 ## Progression Note
 
-Detailed progression steps are condensed into the current Level 2 Tycoon implementation and reflected on the home page cards for Levels 2–5.
+Detailed progression steps are condensed into the current Level 2 Goldfields Venture implementation and reflected on the home page cards for Levels 2–5.
 
 ## Teacher Dashboard
 
@@ -85,4 +85,4 @@ Access: `/teacher/dashboard.html`
 
 ---
 
-**Status:** Level 1 ✅ Complete | Levels 2-5 ✅ Bundled in Tycoon mode
+**Status:** Level 1 ✅ Complete | Levels 2-5 ✅ Bundled in Goldfields Venture mode
