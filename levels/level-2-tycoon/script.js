@@ -6,6 +6,7 @@
 const CLASS_RECORDS_KEY = 'wa_gold_rush_class_records';
 const PAUSE_STATE_KEY = 'wa_gold_rush_pause_state';
 const PLAYER_KEY_STORAGE = 'wa_gold_rush_player_key';
+const DEFAULT_COMPANY_NAME = 'Untitled Mining Co.';
 
 let gameState = null;
 let currentMineForInvestment = null;
@@ -415,7 +416,7 @@ function playRound() {
     }
 
     const totalAtRisk = plannedByMine.reduce(
-        (sum, entry) => sum + Object.values(entry.plan).reduce((s, v) => s + (Number(v) || 0), 0),
+        (sum, entry) => sum + Object.values(entry.plan).reduce((accumulator, v) => accumulator + (Number(v) || 0), 0),
         0
     );
     if (totalAtRisk > gameState.cash) {
@@ -517,7 +518,7 @@ function displayResults(results, totalProfit, eventMessage) {
 function saveIdentity(showAlert = true) {
     gameState.player.studentId = document.getElementById('studentIdInput').value.trim();
     gameState.player.studentName = document.getElementById('studentNameInput').value.trim();
-    gameState.player.companyName = document.getElementById('companyNameInput').value.trim() || 'Untitled Mining Co.';
+    gameState.player.companyName = document.getElementById('companyNameInput').value.trim() || DEFAULT_COMPANY_NAME;
     gameState.saveToLocalStorage();
     updateAllUI();
     syncPlayerRecord();
@@ -528,8 +529,8 @@ function saveIdentity(showAlert = true) {
 
 function hydrateIdentityInputs() {
     const suggested = gameState.gameConfig.company?.suggestedNames || [];
-    if (!gameState.player.companyName || gameState.player.companyName === 'Untitled Mining Co.') {
-        gameState.player.companyName = suggested[0] || 'Untitled Mining Co.';
+    if (!gameState.player.companyName || gameState.player.companyName === DEFAULT_COMPANY_NAME) {
+        gameState.player.companyName = suggested[0] || DEFAULT_COMPANY_NAME;
     }
     document.getElementById('studentIdInput').value = gameState.player.studentId || '';
     document.getElementById('studentNameInput').value = gameState.player.studentName || '';
@@ -569,7 +570,7 @@ function calculateStrategyLabel() {
     const totals = { safe: 0, medium: 0, deep: 0 };
     gameState.roundHistory.forEach(round => {
         (round.results || []).forEach(result => {
-            if (result.digKey && Object.prototype.hasOwnProperty.call(totals, result.digKey)) {
+            if (result.digKey && result.digKey in totals) {
                 totals[result.digKey] += result.amount || 0;
             }
         });
@@ -589,7 +590,7 @@ function syncPlayerRecord() {
         playerKey,
         studentId: gameState.player.studentId || playerKey,
         studentName: gameState.player.studentName || 'Anonymous Student',
-        companyName: gameState.player.companyName || 'Untitled Mining Co.',
+        companyName: gameState.player.companyName || DEFAULT_COMPANY_NAME,
         round: gameState.round,
         cash: gameState.cash,
         netWorth: gameState.getNetWorth(),

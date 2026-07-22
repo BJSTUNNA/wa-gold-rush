@@ -23,7 +23,7 @@
 <body>
     <div class="container">
         <h1>👨‍🏫 Teacher Dashboard</h1>
-        <p><a href="../index.html" aria-label="Return to WA Gold Rush home page">← Back to Home</a></p>
+        <p><a href="../index.html">← Back to Home</a></p>
 
         <section class="card">
             <h2>Class Controls</h2>
@@ -62,9 +62,10 @@
                         <option value="json">JSON</option>
                     </select>
                 </label>
-                <label>&nbsp;
+                <div>
+                    <div class="muted">Import</div>
                     <button id="importBtn" class="btn">Import Students</button>
-                </label>
+                </div>
             </div>
             <textarea id="bulkInput" rows="6" placeholder="name,email,level&#10;Alex,alex@school.edu,2"></textarea>
         </section>
