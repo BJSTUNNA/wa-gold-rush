@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WA Gold Rush - Level 1</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+
+        <h1>⛏️ WA Gold Rush - Level 1</h1>
+        <p style="text-align: center; color: #666; font-size: 12px;">Basic Mining (10 Rounds)</p>
+
+        <h2>Cash: $<span id="cash">100.00</span></h2>
+
+        <h2>Round: <span id="round">1</span>/10</h2>
+
+        <h3>Allocate Your Investments</h3>
+        
+        <div class="investment-grid">
+            <div class="investment-box">
+                <label for="investment-safe">Safe Dig (10%)</label>
+                <input type="number" id="investment-safe" value="0" min="0">
+            </div>
+
+            <div class="investment-box">
+                <label for="investment-medium">Medium Dig (50%)</label>
+                <input type="number" id="investment-medium" value="0" min="0">
+            </div>
+
+            <div class="investment-box">
+                <label for="investment-deep">Deep Vein Dig (300%)</label>
+                <input type="number" id="investment-deep" value="0" min="0">
+            </div>
+        </div>
+
+        <p class="total-investment">Total Investment: $<span id="total-investment">0.00</span></p>
+
+        <br>
+
+        <!-- Give the buttons IDs so script.js can attach listeners -->
+        <button id="playButton" type="button">Roll Dice</button>
+
+        <hr>
+
+        <br><br>
+
+        <button id="resetButton" type="button">Restart Game</button>
+        
+        <h3>Dice Roll</h3>
+        <p id="dice">-</p>
+
+        <h3>Results</h3>
+        <div id="results-container">
+            <p id="result">Start mining!</p>
+        </div>
+
+    </div>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
