@@ -278,17 +278,12 @@ class GameState {
      * Calculate profit from a dig
      */
     calculateProfit(investment, rawProfit, digType, mineId) {
-        let profit = rawProfit;
-        
-        // Apply mine upgrades
-        const upgradeMultiplier = this.getDigTypeMultiplier(mineId, digType);
-        profit = investment * upgradeMultiplier;
-        
-        // Apply machinery bonuses
+        // On failure (rawProfit < 0) return the loss as-is; machinery doesn't help
+        if (rawProfit < 0) return rawProfit;
+
+        // On success: apply machinery bonus to the raw profit
         const machineryBonus = this.getTotalMachineryBonus();
-        profit = profit * (1 + machineryBonus);
-        
-        return profit;
+        return rawProfit * (1 + machineryBonus);
     }
 
     /**

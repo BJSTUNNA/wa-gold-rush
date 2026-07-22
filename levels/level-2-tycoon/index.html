@@ -62,11 +62,25 @@
                     </div>
                 </section>
 
+                <!-- INVESTMENT ALLOCATION -->
+                <section class="panel-section" id="investment-section">
+                    <h2>💡 Invest in Active Mine</h2>
+                    <div id="no-mine-selected" class="empty-state">
+                        Click a mine card above to select it, then set your investments here.
+                    </div>
+                    <div id="active-mine-info" style="display: none;">
+                        <p class="active-mine-label">Mining: <strong id="active-mine-name">—</strong></p>
+                        <div id="investment-inputs" class="investment-grid">
+                            <!-- Populated by selectMine() -->
+                        </div>
+                    </div>
+                </section>
+
                 <!-- ROLL DICE SECTION -->
                 <section class="panel-section dice-section">
                     <h3>🎲 Roll Dice</h3>
                     <p id="dice-display">-</p>
-                    <button id="rollButton" class="btn-primary btn-large">Roll Dice & Mine</button>
+                    <button id="rollButton" class="btn-primary btn-large" disabled>Select a mine first</button>
                     <div id="results-container" class="results-display">
                         <p id="result-text">Allocate investments to begin mining.</p>
                     </div>
@@ -141,11 +155,6 @@
 
                 <h3>Mine Upgrades</h3>
                 <div id="modalUpgrades" class="upgrade-list">
-                    <!-- Dynamically populated -->
-                </div>
-
-                <h3>Investment Allocation</h3>
-                <div id="modalInvestments" class="investment-grid">
                     <!-- Dynamically populated -->
                 </div>
             </div>
