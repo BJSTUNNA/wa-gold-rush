@@ -44,8 +44,8 @@ class TeacherDashboard {
             assignedDate: new Date().toISOString(),
             gameState: {
                 round: 1,
-                cash: 100,
-                netWorth: 100,
+                cash: 200,
+                netWorth: 300,
                 ownedMines: 1,
                 machinery: 0,
                 totalProfitLoss: 0,
@@ -200,8 +200,8 @@ class TeacherDashboard {
                 assignedDate: new Date().toISOString(),
                 gameState: {
                     round: 1,
-                    cash: 100,
-                    netWorth: 100,
+                    cash: 200,
+                    netWorth: 300,
                     ownedMines: 1,
                     machinery: 0,
                     totalProfitLoss: 0,
