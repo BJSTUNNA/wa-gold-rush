@@ -1,0 +1,271 @@
+/**
+ * Teacher Dashboard - Student Management & Progress Tracking
+ * Handles student data, level assignment, and class statistics
+ */
+
+class TeacherDashboard {
+    constructor() {
+        this.students = [];
+        this.gameConfig = null;
+        this.classStats = {
+            totalStudents: 0,
+            averageNetWorth: 0,
+            highestNetWorth: 0,
+            wealthiestStudent: null,
+            mostMinesOwned: 0,
+            topMineOwner: null,
+            averageRound: 0
+        };
+    }
+
+    /**
+     * Load game configuration
+     */
+    async loadConfig(configPath = '../../shared/game-config.json') {
+        try {
+            const response = await fetch(configPath);
+            this.gameConfig = await response.json();
+            return true;
+        } catch (error) {
+            console.error('Failed to load game config:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Add a new student
+     */
+    addStudent(studentData) {
+        const student = {
+            id: this.generateStudentId(),
+            name: studentData.name,
+            email: studentData.email || '',
+            level: studentData.level || 1,
+            assignedDate: new Date().toISOString(),
+            gameState: {
+                round: 1,
+                cash: 100,
+                netWorth: 100,
+                ownedMines: 1,
+                machinery: 0,
+                totalProfitLoss: 0,
+                lastPlayed: null
+            },
+            createdAt: new Date().toISOString(),
+            notes: ''
+        };
+        
+        this.students.push(student);
+        this.saveToLocalStorage();
+        return student;
+    }
+
+    /**
+     * Generate unique student ID
+     */
+    generateStudentId() {
+        return 'STU' + Date.now() + Math.random().toString(36).substr(2, 9);
+    }
+
+    /**
+     * Bulk import students from CSV or JSON
+     */
+    bulkImportStudents(data, format = 'csv') {
+        let students = [];
+        
+        if (format === 'csv') {
+            // Parse CSV: name,email,level
+            const lines = data.trim().split('\n');
+            students = lines.slice(1).map(line => {
+                const [name, email, level] = line.split(',').map(s => s.trim());
+                return { name, email, level: parseInt(level) || 1 };
+            });
+        } else if (format === 'json') {
+            students = JSON.parse(data);
+        }
+        
+        const addedStudents = [];
+        students.forEach(studentData => {
+            const student = this.addStudent(studentData);
+            addedStudents.push(student);
+        });
+        
+        return addedStudents;
+    }
+
+    /**
+     * Update student level assignment
+     */
+    assignLevel(studentId, level) {
+        const student = this.students.find(s => s.id === studentId);
+        if (student) {
+            student.level = level;
+            student.levelAssignedDate = new Date().toISOString();
+            this.saveToLocalStorage();
+            return { success: true, message: `Assigned Level ${level} to ${student.name}` };
+        }
+        return { success: false, error: 'Student not found' };
+    }
+
+    /**
+     * Update student game state (from student's localStorage)
+     */
+    updateStudentProgress(studentId, gameStateData) {
+        const student = this.students.find(s => s.id === studentId);
+        if (student) {
+            student.gameState = {
+                ...student.gameState,
+                ...gameStateData,
+                lastPlayed: new Date().toISOString()
+            };
+            this.saveToLocalStorage();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get student by ID
+     */
+    getStudent(studentId) {
+        return this.students.find(s => s.id === studentId);
+    }
+
+    /**
+     * Get all students
+     */
+    getAllStudents() {
+        return this.students.sort((a, b) => b.gameState.netWorth - a.gameState.netWorth);
+    }
+
+    /**
+     * Get students by level
+     */
+    getStudentsByLevel(level) {
+        return this.students.filter(s => s.level === level);
+    }
+
+    /**
+     * Calculate class statistics
+     */
+    calculateClassStats() {
+        if (this.students.length === 0) {
+            return this.classStats;
+        }
+
+        const totalNetWorth = this.students.reduce((sum, s) => sum + s.gameState.netWorth, 0);
+        const totalRounds = this.students.reduce((sum, s) => sum + s.gameState.round, 0);
+        
+        const sortedByNetWorth = [...this.students].sort((a, b) => b.gameState.netWorth - a.gameState.netWorth);
+        const sortedByMines = [...this.students].sort((a, b) => b.gameState.ownedMines - a.gameState.ownedMines);
+
+        this.classStats = {
+            totalStudents: this.students.length,
+            averageNetWorth: totalNetWorth / this.students.length,
+            highestNetWorth: sortedByNetWorth[0]?.gameState.netWorth || 0,
+            wealthiestStudent: sortedByNetWorth[0],
+            mostMinesOwned: sortedByMines[0]?.gameState.ownedMines || 0,
+            topMineOwner: sortedByMines[0],
+            averageRound: totalRounds / this.students.length
+        };
+
+        return this.classStats;
+    }
+
+    /**
+     * Get leaderboard (sorted by net worth)
+     */
+    getLeaderboard() {
+        return this.students
+            .map((student, index) => ({
+                rank: index + 1,
+                ...student
+            }))
+            .sort((a, b) => b.gameState.netWorth - a.gameState.netWorth);
+    }
+
+    /**
+     * Delete student
+     */
+    deleteStudent(studentId) {
+        const index = this.students.findIndex(s => s.id === studentId);
+        if (index !== -1) {
+            const deleted = this.students.splice(index, 1)[0];
+            this.saveToLocalStorage();
+            return { success: true, message: `Deleted ${deleted.name}` };
+        }
+        return { success: false, error: 'Student not found' };
+    }
+
+    /**
+     * Export class data as CSV
+     */
+    exportAsCSV() {
+        const headers = ['Rank', 'Name', 'Email', 'Level', 'Net Worth', 'Cash', 'Mines', 'Machinery', 'Round', 'Total P/L'];
+        const rows = this.getLeaderboard().map(student => [
+            student.rank,
+            student.name,
+            student.email,
+            student.level,
+            student.gameState.netWorth.toFixed(2),
+            student.gameState.cash.toFixed(2),
+            student.gameState.ownedMines,
+            student.gameState.machinery,
+            student.gameState.round,
+            student.gameState.totalProfitLoss.toFixed(2)
+        ]);
+
+        const csv = [headers, ...rows]
+            .map(row => row.map(cell => `"${cell}"`).join(','))
+            .join('\n');
+
+        return csv;
+    }
+
+    /**
+     * Save to localStorage
+     */
+    saveToLocalStorage() {
+        try {
+            const data = {
+                timestamp: new Date().toISOString(),
+                students: this.students
+            };
+            localStorage.setItem('teacher_dashboard', JSON.stringify(data));
+            return true;
+        } catch (error) {
+            console.error('Failed to save to localStorage:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Load from localStorage
+     */
+    loadFromLocalStorage() {
+        try {
+            const data = JSON.parse(localStorage.getItem('teacher_dashboard'));
+            if (data && data.students) {
+                this.students = data.students;
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Failed to load from localStorage:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Clear all data
+     */
+    clearAll() {
+        this.students = [];
+        localStorage.removeItem('teacher_dashboard');
+    }
+}
+
+// Export for use
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = TeacherDashboard;
+}
