@@ -1,0 +1,359 @@
+{
+  "gameTitle": "WA Gold Rush",
+  "version": "2.0",
+  
+  "levels": {
+    "1": {
+      "name": "Basic Mining",
+      "description": "Single mine, 10 fixed rounds, learn the basics",
+      "maxRounds": 10,
+      "roundsUnending": false,
+      "startingCash": 100,
+      "features": ["dice_rolls", "single_dig_type"]
+    },
+    "2": {
+      "name": "Mining Tycoon",
+      "description": "Multiple mines, upgrades, machinery, unending growth",
+      "maxRounds": null,
+      "roundsUnending": true,
+      "startingCash": 100,
+      "features": ["multiple_mines", "mine_upgrades", "machinery", "net_worth", "unending_rounds"]
+    },
+    "3": {
+      "name": "WA Goldfields",
+      "description": "Strategic expansion across named WA regions",
+      "maxRounds": null,
+      "roundsUnending": true,
+      "startingCash": 100,
+      "features": ["regional_mines", "location_strategy", "regional_limits"]
+    },
+    "4": {
+      "name": "Advanced Operations",
+      "description": "Random events, company mode, high-risk regions",
+      "maxRounds": null,
+      "roundsUnending": true,
+      "startingCash": 100,
+      "features": ["random_events", "company_mode", "high_risk_regions"]
+    },
+    "5": {
+      "name": "Classroom Challenge",
+      "description": "Multiplayer leaderboards and class competition",
+      "maxRounds": null,
+      "roundsUnending": true,
+      "startingCash": 100,
+      "features": ["multiplayer", "leaderboards", "class_stats", "teacher_dashboard"]
+    }
+  },
+
+  "digTypes": {
+    "safe": {
+      "name": "Safe Dig",
+      "multiplier": 0.10,
+      "successRange": {
+        "min": 0,
+        "max": 100
+      },
+      "icon": "✅",
+      "riskLevel": "low",
+      "description": "Low risk, low reward. Always succeeds."
+    },
+    "medium": {
+      "name": "Medium Dig",
+      "multiplier": 0.50,
+      "successRange": {
+        "min": 7,
+        "max": 10
+      },
+      "icon": "⚠️",
+      "riskLevel": "medium",
+      "description": "Moderate risk. Succeeds on dice roll 7-10."
+    },
+    "deep": {
+      "name": "Deep Vein Dig",
+      "multiplier": 3.0,
+      "successRange": {
+        "min": 11,
+        "max": 12
+      },
+      "icon": "💰",
+      "riskLevel": "high",
+      "description": "High risk, high reward. Succeeds on dice roll 11-12."
+    }
+  },
+
+  "mines": {
+    "southern_cross": {
+      "id": "southern_cross",
+      "name": "Southern Cross",
+      "region": "Southern Cross",
+      "cost": 0,
+      "baseValue": 100,
+      "maxInvestmentPerRound": 50,
+      "level": "starter",
+      "icon": "🏔️",
+      "riskLevel": "low",
+      "description": "Your first mine. Safe and reliable.",
+      "successMultiplier": 1.0,
+      "available": true,
+      "owned": true
+    },
+    "coolgardie": {
+      "id": "coolgardie",
+      "name": "Coolgardie",
+      "region": "Coolgardie",
+      "cost": 100,
+      "baseValue": 100,
+      "maxInvestmentPerRound": 100,
+      "level": "basic",
+      "icon": "⛏️",
+      "riskLevel": "medium",
+      "description": "Second mine location. Moderate investment potential.",
+      "successMultiplier": 1.0,
+      "available": true,
+      "owned": false
+    },
+    "kalgoorlie": {
+      "id": "kalgoorlie",
+      "name": "Kalgoorlie",
+      "region": "Kalgoorlie",
+      "cost": 200,
+      "baseValue": 100,
+      "maxInvestmentPerRound": 200,
+      "level": "advanced",
+      "icon": "⛏️",
+      "riskLevel": "medium",
+      "description": "Major goldfields location. Higher investment ceiling.",
+      "successMultiplier": 1.0,
+      "available": true,
+      "owned": false
+    },
+    "leonora": {
+      "id": "leonora",
+      "name": "Leonora",
+      "region": "Leonora",
+      "cost": 300,
+      "baseValue": 100,
+      "maxInvestmentPerRound": 300,
+      "level": "expert",
+      "icon": "⛏️",
+      "riskLevel": "high",
+      "description": "High-risk, high-reward region. Deep Vein Dig is 500%.",
+      "successMultiplier": 1.0,
+      "deepVeinMultiplier": 5.0,
+      "available": false,
+      "owned": false
+    },
+    "laverton": {
+      "id": "laverton",
+      "name": "Laverton",
+      "region": "Laverton",
+      "cost": 400,
+      "baseValue": 100,
+      "maxInvestmentPerRound": 400,
+      "level": "expert",
+      "icon": "⛏️",
+      "riskLevel": "extreme",
+      "description": "Extreme risk. Deep Vein Dig is 600%, but losses are total.",
+      "successMultiplier": 1.0,
+      "deepVeinMultiplier": 6.0,
+      "canLoseTotalInvestment": true,
+      "available": false,
+      "owned": false
+    }
+  },
+
+  "mineUpgrades": {
+    "silver": {
+      "id": "silver",
+      "name": "Silver Upgrade",
+      "cost": 100,
+      "appliesTo": "medium",
+      "effectType": "multiplier_override",
+      "newMultiplier": 1.0,
+      "description": "Medium Dig success becomes 100% profit.",
+      "icon": "🥈",
+      "requirementLevel": 1
+    },
+    "gold": {
+      "id": "gold",
+      "name": "Gold Upgrade",
+      "cost": 200,
+      "appliesTo": "deep",
+      "effectType": "multiplier_override",
+      "newMultiplier": 4.0,
+      "description": "Deep Vein Dig success becomes 400%.",
+      "icon": "🥇",
+      "requirementLevel": 2
+    },
+    "platinum": {
+      "id": "platinum",
+      "name": "Platinum Upgrade",
+      "cost": 500,
+      "appliesTo": "deep",
+      "effectType": "multiplier_override",
+      "newMultiplier": 8.0,
+      "description": "Deep Vein Dig success becomes 800%.",
+      "icon": "💎",
+      "requirementLevel": 3
+    }
+  },
+
+  "machinery": {
+    "excavator": {
+      "id": "excavator",
+      "name": "Excavator",
+      "cost": 100,
+      "baseValue": 100,
+      "profitBonus": 0.50,
+      "bonusType": "percentage",
+      "description": "+50% profit on all digs",
+      "icon": "🚜",
+      "purchaseLimit": 5,
+      "canBeSold": true,
+      "resaleValue": 0.75
+    },
+    "drilling_rig": {
+      "id": "drilling_rig",
+      "name": "Drilling Rig",
+      "cost": 200,
+      "baseValue": 200,
+      "profitBonus": 1.0,
+      "bonusType": "percentage",
+      "description": "+100% profit on all digs",
+      "icon": "🏭",
+      "purchaseLimit": 3,
+      "canBeSold": true,
+      "resaleValue": 0.75
+    },
+    "super_drill": {
+      "id": "super_drill",
+      "name": "Super Drill",
+      "cost": 400,
+      "baseValue": 400,
+      "profitBonus": 2.0,
+      "bonusType": "percentage",
+      "description": "+200% profit on all digs",
+      "icon": "⚙️",
+      "purchaseLimit": 2,
+      "canBeSold": true,
+      "resaleValue": 0.75
+    }
+  },
+
+  "randomEvents": {
+    "equipment_breakdown": {
+      "id": "equipment_breakdown",
+      "name": "Equipment Breakdown",
+      "probability": 0.167,
+      "diceValue": 1,
+      "cost": 50,
+      "effect": "deduct_cash",
+      "description": "Equipment needs repair. Pay $50.",
+      "icon": "🔧"
+    },
+    "fuel_price_increase": {
+      "id": "fuel_price_increase",
+      "name": "Fuel Price Increase",
+      "probability": 0.167,
+      "diceValue": 2,
+      "cost": 20,
+      "effect": "deduct_cash",
+      "description": "Fuel costs spike. Pay $20.",
+      "icon": "⛽"
+    },
+    "worker_shortage": {
+      "id": "worker_shortage",
+      "name": "Worker Shortage",
+      "probability": 0.167,
+      "diceValue": 3,
+      "effect": "halve_profits",
+      "description": "All successful claims this round are halved.",
+      "icon": "👥"
+    },
+    "successful_recruitment": {
+      "id": "successful_recruitment",
+      "name": "Successful Recruitment",
+      "probability": 0.167,
+      "diceValue": 4,
+      "effect": "double_profits",
+      "description": "New staff hired! Double all profits this round.",
+      "icon": "🎉"
+    },
+    "gold_rush": {
+      "id": "gold_rush",
+      "name": "Gold Rush",
+      "probability": 0.167,
+      "diceValue": 5,
+      "bonusPercentage": 0.20,
+      "effect": "bonus_profit",
+      "description": "Massive strike! Extra 20% profit this round.",
+      "icon": "🌟"
+    },
+    "rich_vein_found": {
+      "id": "rich_vein_found",
+      "name": "Rich Vein Found",
+      "probability": 0.167,
+      "diceValue": 6,
+      "effect": "automatic_success",
+      "description": "Choose one dig type. It automatically succeeds!",
+      "icon": "💎"
+    }
+  },
+
+  "company": {
+    "suggestedNames": [
+      "Perth Prospectors",
+      "Kalgoorlie Kings",
+      "Gold Diggers WA",
+      "Outback Mining Co.",
+      "Red Earth Resources",
+      "Goldfield Ventures",
+      "WA Mining Syndicate",
+      "Nugget Networks",
+      "Desert Gold Ltd",
+      "Aussie Prospectors"
+    ],
+    "namingRules": {
+      "minLength": 3,
+      "maxLength": 50,
+      "allowSpecialChars": false,
+      "allowNumbers": true
+    }
+  },
+
+  "netWorthCalculation": {
+    "formula": "Cash + MineValue + MachineryValue",
+    "components": {
+      "cash": "Current available funds",
+      "mineValue": "Sum of all owned mines' base values",
+      "machineryValue": "Sum of all machinery item values"
+    },
+    "description": "Total net worth determines rank on leaderboard"
+  },
+
+  "teacherDashboard": {
+    "features": [
+      "student_import",
+      "level_assignment",
+      "progress_monitoring",
+      "pause_game",
+      "view_leaderboards",
+      "export_data",
+      "real_time_stats"
+    ],
+    "stats": {
+      "wealthiest_player": "Highest net worth",
+      "most_mines_owned": "Most developed mining operation",
+      "most_profitable_strategy": "Highest round profit average",
+      "average_class_wealth": "Mean net worth of all students"
+    }
+  },
+
+  "dataPrivacy": {
+    "storedOffsite": false,
+    "storage": "localStorage + OneDrive (teacher only)",
+    "identifyingData": "None stored externally",
+    "complianceNotes": "Education department data policies compliant",
+    "region": "Australia (Western Australia)"
+  }
+}
