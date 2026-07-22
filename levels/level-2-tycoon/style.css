@@ -639,3 +639,40 @@ button:disabled {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== MINE SELECTION ===== */
+.mine-card.selected {
+    border-color: #ff9800;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe8cc 100%);
+    box-shadow: 0 6px 15px rgba(255, 152, 0, 0.4);
+}
+
+/* Upgrade button on mine cards */
+.upgrade-btn {
+    background: #7b1fa2;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: bold;
+    margin-top: 6px;
+    width: 100%;
+    transition: background 0.2s;
+}
+
+.upgrade-btn:hover {
+    background: #6a1b9a;
+}
+
+/* Active mine label in investment panel */
+.active-mine-label {
+    font-size: 15px;
+    color: #1a1a2e;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    background: #fff9e6;
+    border-radius: 5px;
+    border-left: 4px solid #f4b400;
+}
