@@ -79,6 +79,9 @@ function shouldRollRandomEvent() {
 document.addEventListener('DOMContentLoaded', async function() {
     gameState = new GameState();
     gameState.assignedLevel = getAssignedLevelFromUrl();
+    gameState.isMineUpgradeAllowed = (upgradeId, level = gameState.assignedLevel) => isMineUpgradeAllowed(upgradeId, level);
+    gameState.isMachineryAllowed = (machineryId, level = gameState.assignedLevel) => isMachineryAllowed(machineryId, level);
+    gameState.canRollRandomEvents = (level = gameState.assignedLevel) => level >= RANDOM_EVENT_MIN_LEVEL;
     const configLoaded = await gameState.loadConfig('../../shared/game-config.json');
     if (!configLoaded) {
         alert('Failed to load game configuration. Please refresh the page.');
@@ -453,6 +456,9 @@ function sellMachinery(index) {
 }
 
 function rollRoundEvent() {
+    if (!(gameState?.canRollRandomEvents?.(gameState.assignedLevel))) {
+        return { roll: null, event: null };
+    }
     const roll = Math.floor(Math.random() * 6) + 1;
     const event = Object.values(gameState.gameConfig.randomEvents).find(e => e.diceValue === roll);
     return { roll, event };
