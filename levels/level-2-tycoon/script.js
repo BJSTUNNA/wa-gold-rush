@@ -9,6 +9,8 @@ const PLAYER_KEY_STORAGE = 'wa_gold_rush_player_key';
 const DEFAULT_COMPANY_NAME = 'Untitled Mining Co.';
 const RANDOM_EVENT_MIN_LEVEL = 4;
 const RANDOM_EVENT_ROLL_INTERVAL = 10;
+const MINE_UPGRADE_ORDER = ['silver', 'gold', 'platinum'];
+const MACHINERY_ORDER = ['excavator', 'drilling_rig', 'super_drill'];
 
 let gameState = null;
 let currentMineForInvestment = null;
@@ -36,6 +38,27 @@ function updateAssignedLevelBadge() {
     badge.textContent = getAssignedLevelLabel(gameState?.assignedLevel || 2);
 }
 
+function getAllowedMineUpgradeIds(level = gameState?.assignedLevel || 2) {
+    if (level <= 2) return [];
+    if (level === 3) return MINE_UPGRADE_ORDER.slice(0, 1);
+    if (level === 4) return MINE_UPGRADE_ORDER.slice(0, 2);
+    return [...MINE_UPGRADE_ORDER];
+}
+
+function getAllowedMachineryIds(level = gameState?.assignedLevel || 2) {
+    if (level <= 2) return MACHINERY_ORDER.slice(0, 1);
+    if (level === 3) return MACHINERY_ORDER.slice(0, 2);
+    return [...MACHINERY_ORDER];
+}
+
+function isMineUpgradeAllowed(upgradeId, level = gameState?.assignedLevel || 2) {
+    return getAllowedMineUpgradeIds(level).includes(upgradeId);
+}
+
+function isMachineryAllowed(machineryId, level = gameState?.assignedLevel || 2) {
+    return getAllowedMachineryIds(level).includes(machineryId);
+}
+
 function getProgressionLevel() {
     const round = Number(gameState?.round) || 1;
     if (round >= 40) return 5;
@@ -45,8 +68,8 @@ function getProgressionLevel() {
 }
 
 function shouldRollRandomEvent() {
-    const progressionLevel = getProgressionLevel();
-    if (progressionLevel < RANDOM_EVENT_MIN_LEVEL) {
+    const assignedLevel = gameState?.assignedLevel || 2;
+    if (assignedLevel < RANDOM_EVENT_MIN_LEVEL) {
         return false;
     }
 
@@ -193,8 +216,13 @@ function renderMachinery() {
 
 function renderMachineryShop() {
     const shop = document.getElementById('machinery-shop');
-    const machineryList = Object.entries(gameState.gameConfig.machinery);
+    const machineryList = Object.entries(gameState.gameConfig.machinery)
+        .filter(([id]) => isMachineryAllowed(id));
     shop.innerHTML = '';
+    if (!machineryList.length) {
+        shop.innerHTML = '<p class="empty-state">No machinery available at this assigned level.</p>';
+        return;
+    }
     machineryList.forEach(([id, machinery]) => {
         const ownedCount = gameState.machinery.filter(m => m.id === id).length;
         const canPurchase = ownedCount < machinery.purchaseLimit && gameState.cash >= machinery.cost;
@@ -237,17 +265,25 @@ function renderStats() {
 function renderFeaturesAndCosts() {
     const cfg = gameState.gameConfig;
     const mines = Object.values(cfg.mines).map(m => `${m.name} $${m.cost} (max $${m.maxInvestmentPerRound})`).join('</li><li>');
-    const upgrades = Object.values(cfg.mineUpgrades).map(u => `${u.name} $${u.cost}`).join('</li><li>');
-    const machinery = Object.values(cfg.machinery).map(m => `${m.name} $${m.cost} (+${Math.round(m.profitBonus * 100)}%)`).join('</li><li>');
-    const events = Object.values(cfg.randomEvents)
-        .sort((a, b) => a.diceValue - b.diceValue)
-        .map(e => `${e.diceValue}: ${e.description}`)
-        .join(', ');
+    const upgrades = Object.entries(cfg.mineUpgrades)
+        .filter(([id]) => isMineUpgradeAllowed(id))
+        .map(([, u]) => `${u.name} $${u.cost}`)
+        .join('</li><li>');
+    const machinery = Object.entries(cfg.machinery)
+        .filter(([id]) => isMachineryAllowed(id))
+        .map(([, m]) => `${m.name} $${m.cost} (+${Math.round(m.profitBonus * 100)}%)`)
+        .join('</li><li>');
+    const events = (gameState.assignedLevel >= RANDOM_EVENT_MIN_LEVEL)
+        ? Object.values(cfg.randomEvents)
+            .sort((a, b) => a.diceValue - b.diceValue)
+            .map(e => `${e.diceValue}: ${e.description}`)
+            .join(', ')
+        : 'Locked until Level 4';
     document.getElementById('features-costs').innerHTML = `
         <ul>
             <li><strong>Mines:</strong> ${mines}</li>
-            <li><strong>Upgrades:</strong> ${upgrades}</li>
-            <li><strong>Machinery:</strong> ${machinery}</li>
+            <li><strong>Upgrades:</strong> ${upgrades || 'No mine upgrades at this level'}</li>
+            <li><strong>Machinery:</strong> ${machinery || 'No machinery available at this level'}</li>
             <li><strong>Random Events:</strong> ${events}</li>
             <li><strong>Net Worth:</strong> Cash + Mine Value + Machinery Resale Value</li>
         </ul>
@@ -301,9 +337,10 @@ function openMineModal(mine) {
     document.getElementById('modalMaxInvestment').textContent = `Max Investment: $${mine.maxInvestmentPerRound}/round`;
 
     const upgradesContainer = document.getElementById('modalUpgrades');
-    const availableUpgrades = Object.entries(gameState.gameConfig.mineUpgrades).filter(([id]) => !mine.upgrades.includes(id));
+    const availableUpgrades = Object.entries(gameState.gameConfig.mineUpgrades)
+        .filter(([id]) => !mine.upgrades.includes(id) && isMineUpgradeAllowed(id));
     if (!availableUpgrades.length) {
-        upgradesContainer.innerHTML = '<p class="empty-state">All upgrades applied!</p>';
+        upgradesContainer.innerHTML = '<p class="empty-state">No mine upgrades available at this level, or all unlocked upgrades applied.</p>';
     } else {
         upgradesContainer.innerHTML = availableUpgrades.map(([id, upgrade]) => {
             const canAfford = gameState.cash >= upgrade.cost;
