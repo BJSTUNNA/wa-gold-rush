@@ -194,12 +194,16 @@ function renderFeaturesAndCosts() {
     const mines = Object.values(cfg.mines).map(m => `${m.name} $${m.cost} (max $${m.maxInvestmentPerRound})`).join('</li><li>');
     const upgrades = Object.values(cfg.mineUpgrades).map(u => `${u.name} $${u.cost}`).join('</li><li>');
     const machinery = Object.values(cfg.machinery).map(m => `${m.name} $${m.cost} (+${Math.round(m.profitBonus * 100)}%)`).join('</li><li>');
+    const events = Object.values(cfg.randomEvents)
+        .sort((a, b) => a.diceValue - b.diceValue)
+        .map(e => `${e.diceValue}: ${e.description}`)
+        .join(', ');
     document.getElementById('features-costs').innerHTML = `
         <ul>
             <li><strong>Mines:</strong> ${mines}</li>
             <li><strong>Upgrades:</strong> ${upgrades}</li>
             <li><strong>Machinery:</strong> ${machinery}</li>
-            <li><strong>Random Events:</strong> 1:$50 repair, 2:$20 fuel, 3:profits halved, 4:profits doubled, 5:+20%, 6:auto-success dig choice</li>
+            <li><strong>Random Events:</strong> ${events}</li>
             <li><strong>Net Worth:</strong> Cash + Mine Value + Machinery Resale Value</li>
         </ul>
     `;
@@ -571,6 +575,7 @@ function calculateStrategyLabel() {
         });
     });
     const max = Math.max(totals.safe, totals.medium, totals.deep);
+    if (max === 0) return 'No strategy yet';
     if (max === totals.safe) return 'Safe-focused';
     if (max === totals.medium) return 'Balanced-medium';
     return 'High-risk deep';
