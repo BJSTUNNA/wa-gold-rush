@@ -8,6 +8,11 @@ class GameState {
         this.round = 1;
         this.cash = 100;
         this.gameConfig = null;
+        this.player = {
+            studentId: '',
+            studentName: '',
+            companyName: 'Untitled Mining Co.'
+        };
         
         // Mines tracking
         this.ownedMines = {
@@ -28,6 +33,7 @@ class GameState {
         // Game history
         this.roundHistory = [];
         this.totalProfitLoss = 0;
+        this.investmentPlans = {};
     }
 
     /**
@@ -37,6 +43,7 @@ class GameState {
         try {
             const response = await fetch(configPath);
             this.gameConfig = await response.json();
+            this.cash = this.gameConfig?.levels?.['2']?.startingCash || this.cash;
             console.log('Game config loaded:', this.gameConfig);
             return true;
         } catch (error) {
@@ -66,8 +73,18 @@ class GameState {
      */
     getAvailableMinesForPurchase() {
         return Object.entries(this.gameConfig.mines)
-            .filter(([id, mine]) => !this.ownedMines[id] || !this.ownedMines[id].owned)
+            .filter(([id]) => (!this.ownedMines[id] || !this.ownedMines[id].owned) && this.isMineUnlocked(id))
             .map(([id, mine]) => mine);
+    }
+
+    isMineUnlocked(mineId) {
+        if (mineId === 'leonora') {
+            return !!this.ownedMines.kalgoorlie?.owned;
+        }
+        if (mineId === 'laverton') {
+            return !!this.ownedMines.leonora?.owned;
+        }
+        return true;
     }
 
     /**
@@ -96,6 +113,9 @@ class GameState {
             purchasePrice: mine.cost,
             upgrades: []
         };
+        if (!this.investmentPlans[mineId]) {
+            this.investmentPlans[mineId] = { safe: 0, medium: 0, deep: 0 };
+        }
         
         return { 
             success: true, 
@@ -275,19 +295,21 @@ class GameState {
     }
 
     /**
-     * Calculate profit from a dig
+     * Calculate outcome for a dig
      */
-    calculateProfit(investment, rawProfit, digType, mineId) {
-        let profit = rawProfit;
-        
-        // Apply mine upgrades
-        const upgradeMultiplier = this.getDigTypeMultiplier(mineId, digType);
-        profit = investment * upgradeMultiplier;
-        
-        // Apply machinery bonuses
+    calculateOutcome(investment, digType, mineId, isSuccess, roundEffects = {}) {
+        if (!isSuccess) {
+            return -investment;
+        }
+
+        let profit = investment * this.getDigTypeMultiplier(mineId, digType);
         const machineryBonus = this.getTotalMachineryBonus();
-        profit = profit * (1 + machineryBonus);
-        
+        profit *= (1 + machineryBonus);
+
+        if (roundEffects.profitMultiplier) {
+            profit *= roundEffects.profitMultiplier;
+        }
+
         return profit;
     }
 
@@ -323,13 +345,15 @@ class GameState {
         return {
             round: this.round,
             cash: this.cash,
+            player: this.player,
             ownedMines: this.getOwnedMines(),
             machinery: this.machinery.map(item => this.gameConfig.machinery[item.id]),
             mineValue: this.getMineValue(),
             machineryValue: this.getMachineryValue(),
             netWorth: this.getNetWorth(),
             totalProfitLoss: this.totalProfitLoss,
-            roundHistory: this.roundHistory
+            roundHistory: this.roundHistory,
+            investmentPlans: this.investmentPlans
         };
     }
 
@@ -343,10 +367,12 @@ class GameState {
                 gameState: {
                     round: this.round,
                     cash: this.cash,
+                    player: this.player,
                     ownedMines: this.ownedMines,
                     machinery: this.machinery,
                     roundHistory: this.roundHistory,
-                    totalProfitLoss: this.totalProfitLoss
+                    totalProfitLoss: this.totalProfitLoss,
+                    investmentPlans: this.investmentPlans
                 }
             };
             localStorage.setItem(slotName, JSON.stringify(saveData));
@@ -368,10 +394,15 @@ class GameState {
             
             this.round = saveData.gameState.round;
             this.cash = saveData.gameState.cash;
+            this.player = {
+                ...this.player,
+                ...(saveData.gameState.player || {})
+            };
             this.ownedMines = saveData.gameState.ownedMines;
             this.machinery = saveData.gameState.machinery;
             this.roundHistory = saveData.gameState.roundHistory;
             this.totalProfitLoss = saveData.gameState.totalProfitLoss;
+            this.investmentPlans = saveData.gameState.investmentPlans || {};
             
             return { success: true, message: 'Game loaded from save' };
         } catch (error) {
@@ -384,7 +415,12 @@ class GameState {
      */
     reset() {
         this.round = 1;
-        this.cash = 100;
+        this.cash = this.gameConfig?.levels?.['2']?.startingCash || 100;
+        this.player = {
+            studentId: '',
+            studentName: '',
+            companyName: 'Untitled Mining Co.'
+        };
         this.ownedMines = {
             'southern_cross': {
                 id: 'southern_cross',
@@ -397,6 +433,7 @@ class GameState {
         this.mineUpgrades = {};
         this.roundHistory = [];
         this.totalProfitLoss = 0;
+        this.investmentPlans = {};
     }
 }
 

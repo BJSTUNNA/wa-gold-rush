@@ -21,7 +21,7 @@ class TeacherDashboard {
     /**
      * Load game configuration
      */
-    async loadConfig(configPath = '../../shared/game-config.json') {
+    async loadConfig(configPath = '../shared/game-config.json') {
         try {
             const response = await fetch(configPath);
             this.gameConfig = await response.json();
@@ -176,12 +176,61 @@ class TeacherDashboard {
      * Get leaderboard (sorted by net worth)
      */
     getLeaderboard() {
-        return this.students
+        return [...this.students]
+            .sort((a, b) => b.gameState.netWorth - a.gameState.netWorth)
             .map((student, index) => ({
                 rank: index + 1,
                 ...student
-            }))
-            .sort((a, b) => b.gameState.netWorth - a.gameState.netWorth);
+            }));
+    }
+
+    /**
+     * Upsert student progress from shared class gameplay record
+     */
+    syncFromPlayerRecord(record) {
+        const studentId = record.studentId || record.playerKey;
+        let student = this.students.find(s => s.id === studentId);
+
+        if (!student) {
+            student = {
+                id: studentId,
+                name: record.studentName || 'Unknown Student',
+                email: '',
+                level: 2,
+                assignedDate: new Date().toISOString(),
+                gameState: {
+                    round: 1,
+                    cash: 100,
+                    netWorth: 100,
+                    ownedMines: 1,
+                    machinery: 0,
+                    totalProfitLoss: 0,
+                    averageRoundProfit: 0,
+                    strategyLabel: '',
+                    companyName: '',
+                    lastPlayed: null
+                },
+                createdAt: new Date().toISOString(),
+                notes: ''
+            };
+            this.students.push(student);
+        }
+
+        student.name = record.studentName || student.name;
+        student.gameState = {
+            ...student.gameState,
+            round: record.round ?? student.gameState.round,
+            cash: record.cash ?? student.gameState.cash,
+            netWorth: record.netWorth ?? student.gameState.netWorth,
+            ownedMines: record.minesOwned ?? student.gameState.ownedMines,
+            machinery: record.machineryOwned ?? student.gameState.machinery,
+            totalProfitLoss: record.totalProfitLoss ?? student.gameState.totalProfitLoss,
+            averageRoundProfit: record.averageRoundProfit ?? student.gameState.averageRoundProfit,
+            strategyLabel: record.strategyLabel ?? student.gameState.strategyLabel,
+            companyName: record.companyName ?? student.gameState.companyName,
+            lastPlayed: record.updatedAt || new Date().toISOString()
+        };
+        return student;
     }
 
     /**

@@ -13,10 +13,7 @@ wa-gold-rush/
 │   │   ├── index.html
 │   │   ├── script.js
 │   │   └── style.css
-│   ├── level-2-tycoon/          # (Coming soon)
-│   ├── level-3-regions/         # (Coming soon)
-│   ├── level-4-advanced/        # (Coming soon)
-│   └── level-5-multiplayer/     # (Coming soon)
+│   └── level-2-tycoon/          # Active Tycoon mode (bundles Levels 2-5 progression)
 │
 ├── shared/                       # Shared utilities across levels
 │   ├── game-config.json         # Game configuration & assets
@@ -25,8 +22,7 @@ wa-gold-rush/
 │
 ├── teacher/                      # Teacher dashboard
 │   ├── dashboard.html
-│   ├── dashboard.js
-│   └── dashboard-styles.css
+│   └── dashboard-state.js
 │
 ├── index.html                    # Level selector (home page)
 └── README.md
@@ -37,10 +33,10 @@ wa-gold-rush/
 | Level | Name | Description | Duration | Features |
 |-------|------|-------------|----------|----------|
 | 1 | Basic Mining | Original game - single mine, 10 rounds fixed | 10 min | Dice rolls, 3 dig types |
-| 2 | Mining Tycoon | Multiple mines, upgrades, machinery | Unending | Net worth calculation |
-| 3 | WA Regions | Named locations with different risks | Unending | Regional strategy |
-| 4 | Advanced | Random events, company mode | Unending | Risk management |
-| 5 | Multiplayer | Class leaderboards, collaborative play | Ongoing | Social learning |
+| 2 | Mining Tycoon | Multiple mines, upgrades, machinery, resale | Unending | Net worth + event system |
+| 3 | WA Regions | Southern Cross, Coolgardie, Kalgoorlie progression | Unending | Regional strategy |
+| 4 | Advanced | Company mode, random events, advanced risk | Unending | Strategic planning |
+| 5 | Classroom Challenge | Shared local leaderboard + teacher stats/pause | Ongoing | Classroom competition |
 
 ## Level 1: Basic Mining (Archived)
 
@@ -60,9 +56,9 @@ The original working game - preserved as-is for reference and student access.
 - Teacher can export progress to OneDrive (encrypted, education tenant)
 - Compliant with education department data policies
 
-## Future Levels (In Progress)
+## Progression Note
 
-See individual level directories for development status.
+Detailed progression steps are condensed into the current Level 2 Tycoon implementation and reflected on the home page cards for Levels 2–5.
 
 ## Teacher Dashboard
 
@@ -70,9 +66,9 @@ Access: `/teacher/dashboard.html`
 
 - Import student lists (bulk or individual)
 - Assign students to levels
-- Monitor real-time progress
+- Monitor local shared progress and leaderboard statistics
 - Pause game for lessons
-- Export class data to OneDrive
+- Track wealthiest player, most mines owned, most profitable strategy, and average class wealth
 
 ## Getting Started
 
@@ -89,4 +85,4 @@ Access: `/teacher/dashboard.html`
 
 ---
 
-**Status:** Level 1 ✅ Complete | Levels 2-5 🚧 In Progress
+**Status:** Level 1 ✅ Complete | Levels 2-5 ✅ Bundled in Tycoon mode

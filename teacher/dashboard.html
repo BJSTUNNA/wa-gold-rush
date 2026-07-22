@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WA Gold Rush - Teacher Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f5f5f5; color: #222; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .card { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+        .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        input, textarea, select, button { width: 100%; padding: 8px; box-sizing: border-box; margin-top: 4px; }
+        button { cursor: pointer; border: 0; border-radius: 6px; font-weight: bold; }
+        .btn { background: #f4b400; color: #fff; }
+        .btn-secondary { background: #2e7d32; color: #fff; }
+        .btn-danger { background: #c62828; color: #fff; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 8px; border-bottom: 1px solid #ececec; text-align: left; }
+        .row-actions { display: grid; gap: 8px; grid-template-columns: 1fr 1fr 1fr; }
+        .muted { color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>👨‍🏫 Teacher Dashboard</h1>
+        <p><a href="../index.html">← Back to Home</a></p>
+
+        <section class="card">
+            <h2>Class Controls</h2>
+            <div class="row-actions">
+                <button id="pauseClassBtn" class="btn-danger">Pause Class Gameplay</button>
+                <button id="resumeClassBtn" class="btn-secondary">Resume Class Gameplay</button>
+                <button id="refreshBtn" class="btn">Refresh Stats</button>
+            </div>
+            <p id="pauseStatus" class="muted"></p>
+        </section>
+
+        <section class="card">
+            <h2>Student Management</h2>
+            <div class="grid">
+                <label>Name <input id="studentName" type="text" placeholder="Student name"></label>
+                <label>Email (optional) <input id="studentEmail" type="email" placeholder="student@example.com"></label>
+                <label>Assigned Level
+                    <select id="studentLevel">
+                        <option value="1">Level 1</option>
+                        <option value="2" selected>Level 2</option>
+                        <option value="3">Level 3</option>
+                        <option value="4">Level 4</option>
+                        <option value="5">Level 5</option>
+                    </select>
+                </label>
+            </div>
+            <p><button id="addStudentBtn" class="btn">Add Student</button></p>
+        </section>
+
+        <section class="card">
+            <h2>Bulk Import</h2>
+            <div class="grid">
+                <label>Format
+                    <select id="importFormat">
+                        <option value="csv">CSV (name,email,level)</option>
+                        <option value="json">JSON</option>
+                    </select>
+                </label>
+                <div>
+                    <div class="muted">Import</div>
+                    <button id="importBtn" class="btn">Import Students</button>
+                </div>
+            </div>
+            <textarea id="bulkInput" rows="6" placeholder="name,email,level&#10;Alex,alex@school.edu,2"></textarea>
+        </section>
+
+        <section class="card">
+            <h2>Class Statistics</h2>
+            <div id="classStats" class="muted">No data yet.</div>
+        </section>
+
+        <section class="card">
+            <h2>Classroom Leaderboard</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Student</th>
+                        <th>Company</th>
+                        <th>Net Worth</th>
+                        <th>Mines</th>
+                        <th>Strategy</th>
+                        <th>Last Played</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody"></tbody>
+            </table>
+        </section>
+    </div>
+
+    <script src="dashboard-state.js"></script>
+    <script>
+        const CLASS_RECORDS_KEY = 'wa_gold_rush_class_records';
+        const PAUSE_STATE_KEY = 'wa_gold_rush_pause_state';
+        const dashboard = new TeacherDashboard();
+        dashboard.loadFromLocalStorage();
+
+        function getRecords() {
+            try {
+                const raw = localStorage.getItem(CLASS_RECORDS_KEY);
+                if (!raw) return [];
+                const records = JSON.parse(raw);
+                return Array.isArray(records) ? records : [];
+            } catch (error) {
+                console.error('Failed to load class records:', error);
+                return [];
+            }
+        }
+
+        function syncFromRecords() {
+            getRecords().forEach(record => dashboard.syncFromPlayerRecord(record));
+            dashboard.saveToLocalStorage();
+        }
+
+        function renderPauseStatus() {
+            let paused = false;
+            try {
+                paused = !!JSON.parse(localStorage.getItem(PAUSE_STATE_KEY))?.paused;
+            } catch (error) {
+                console.error('Failed to load pause state:', error);
+            }
+            document.getElementById('pauseStatus').textContent = paused
+                ? 'Gameplay is currently paused.'
+                : 'Gameplay is active.';
+        }
+
+        function renderStats() {
+            syncFromRecords();
+            const stats = dashboard.calculateClassStats();
+            const records = getRecords();
+            const byStrategy = {};
+            records.forEach(r => {
+                const key = r.strategyLabel || 'Unknown';
+                byStrategy[key] = (byStrategy[key] || 0) + 1;
+            });
+            const topStrategy = Object.entries(byStrategy).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+
+            document.getElementById('classStats').innerHTML = `
+                Total students: <strong>${stats.totalStudents}</strong><br>
+                Wealthiest player: <strong>${stats.wealthiestStudent?.gameState?.companyName || stats.wealthiestStudent?.name || 'N/A'}</strong><br>
+                Most mines owned: <strong>${stats.mostMinesOwned}</strong><br>
+                Most profitable strategy: <strong>${topStrategy}</strong><br>
+                Average class wealth: <strong>$${(stats.averageNetWorth || 0).toFixed(2)}</strong>
+            `;
+        }
+
+        function renderLeaderboard() {
+            const body = document.getElementById('leaderboardBody');
+            const records = getRecords().sort((a, b) => b.netWorth - a.netWorth);
+            if (!records.length) {
+                body.innerHTML = '<tr><td colspan="7">No gameplay records yet.</td></tr>';
+                return;
+            }
+            body.innerHTML = records.map((record, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${record.studentName || 'Unknown'}</td>
+                    <td>${record.companyName || 'Untitled'}</td>
+                    <td>$${Number(record.netWorth || 0).toFixed(2)}</td>
+                    <td>${record.minesOwned || 0}</td>
+                    <td>${record.strategyLabel || 'N/A'}</td>
+                    <td>${record.updatedAt ? new Date(record.updatedAt).toLocaleString() : 'N/A'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function refresh() {
+            renderPauseStatus();
+            renderStats();
+            renderLeaderboard();
+        }
+
+        document.getElementById('addStudentBtn').addEventListener('click', () => {
+            const name = document.getElementById('studentName').value.trim();
+            if (!name) {
+                alert('Student name is required.');
+                return;
+            }
+            dashboard.addStudent({
+                name,
+                email: document.getElementById('studentEmail').value.trim(),
+                level: parseInt(document.getElementById('studentLevel').value, 10)
+            });
+            refresh();
+        });
+
+        document.getElementById('importBtn').addEventListener('click', () => {
+            const data = document.getElementById('bulkInput').value.trim();
+            if (!data) {
+                alert('Paste CSV or JSON data first.');
+                return;
+            }
+            const format = document.getElementById('importFormat').value;
+            try {
+                const imported = dashboard.bulkImportStudents(data, format);
+                alert(`Imported ${imported.length} students.`);
+                refresh();
+            } catch (error) {
+                alert(`Import failed: ${error.message}`);
+            }
+        });
+
+        document.getElementById('pauseClassBtn').addEventListener('click', () => {
+            localStorage.setItem(PAUSE_STATE_KEY, JSON.stringify({ paused: true }));
+            refresh();
+        });
+
+        document.getElementById('resumeClassBtn').addEventListener('click', () => {
+            localStorage.setItem(PAUSE_STATE_KEY, JSON.stringify({ paused: false }));
+            refresh();
+        });
+
+        document.getElementById('refreshBtn').addEventListener('click', refresh);
+        refresh();
+    </script>
+</body>
+</html>
