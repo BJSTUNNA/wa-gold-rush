@@ -42,23 +42,24 @@ class TeacherDashboard {
      * Generate unique student ID
      */
     generateStudentId() {
-        return 'STU' + Date.now() + Math.random().toString(36).substr(2, 9);
+        return 'STU' + Date.now() + Math.random().toString(36).slice(2, 11);
     }
 
     /**
      * Generate a username from a display name (lowercase, no spaces).
      * Appends a short suffix if the name is already taken.
      * @param {string} name
+     * @param {string} [excludeId]  Student ID to exclude from collision check (for reset scenarios).
      * @returns {string}
      */
-    generateUsername(name) {
+    generateUsername(name, excludeId) {
         const base = (name || 'student')
             .toLowerCase()
             .replace(/[^a-z0-9]/g, '')
             .slice(0, 12) || 'student';
         let candidate = base;
         let suffix = 1;
-        while (this.students.some(s => s.username === candidate)) {
+        while (this.students.some(s => s.username === candidate && s.id !== excludeId)) {
             candidate = base + suffix++;
         }
         return candidate;
@@ -164,13 +165,7 @@ class TeacherDashboard {
         const student = this.students.find(s => s.id === studentId);
         if (!student) return { success: false, error: 'Student not found' };
 
-        // Temporarily remove from list so generateUsername won't conflict with self
-        const tempStudents = this.students.filter(s => s.id !== studentId);
-        const savedStudents = this.students;
-        this.students = tempStudents;
-        const newUsername = this.generateUsername(student.name);
-        this.students = savedStudents;
-
+        const newUsername = this.generateUsername(student.name, studentId);
         const newPin = this.generatePin(4);
         student.username   = newUsername;
         student.pin        = newPin;

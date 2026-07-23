@@ -20,23 +20,11 @@
     /**
      * Validate and normalise a raw session object.
      * Returns null if the shape is unrecognisable.
-     * @param {any} raw
+     * @param {any} raw  Already-parsed object (not a raw string)
      * @returns {{ studentId:string, studentName:string, username:string, assignedLevel:number, companyName:string, loginAt:string }|null}
      */
     function _normalise(raw) {
         if (!raw || typeof raw !== 'object') return null;
-
-        // Legacy format: raw was just a plain string UUID stored directly
-        if (typeof raw === 'string') {
-            return {
-                studentId: raw,
-                studentName: '',
-                username: '',
-                assignedLevel: 2,
-                companyName: '',
-                loginAt: new Date().toISOString()
-            };
-        }
 
         return {
             studentId:     String(raw.studentId     || raw.playerKey || ''),
@@ -56,8 +44,24 @@
         try {
             const raw = localStorage.getItem(PLAYER_SESSION_KEY);
             if (!raw) return null;
-            const parsed = JSON.parse(raw);
-            return _normalise(parsed);
+
+            // Legacy format: plain string UUID stored directly (not JSON object)
+            try {
+                const parsed = JSON.parse(raw);
+                if (parsed && typeof parsed === 'object') {
+                    return _normalise(parsed);
+                }
+            } catch (e) { /* not valid JSON */ }
+
+            // Treat as legacy plain string UUID
+            return {
+                studentId:     raw,
+                studentName:   '',
+                username:      '',
+                assignedLevel: 2,
+                companyName:   '',
+                loginAt:       ''
+            };
         } catch (e) {
             console.warn('[StudentSession] Failed to parse session:', e);
             return null;

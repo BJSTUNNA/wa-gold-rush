@@ -66,7 +66,7 @@
             netWorth,
             finalCash,
             roundsPlayed:   Number(raw.roundsPlayed  ?? raw.round  ?? 0),
-            minesOwned:     Number(raw.minesOwned    ?? raw.minesOwned ?? 0),
+            minesOwned:     Number(raw.minesOwned    ?? 0),
             machineryCount: Number(raw.machineryCount ?? raw.machineryOwned ?? 0),
             companyName:   String(raw.companyName   || ''),
             source,

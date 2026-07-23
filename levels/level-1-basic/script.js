@@ -55,22 +55,19 @@ function getStudentSession() {
         if (!raw) return null;
         try {
             const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === 'object' && parsed.studentId) {
+            if (parsed && typeof parsed === 'object') {
                 return {
-                    studentId:     String(parsed.studentId),
-                    studentName:   String(parsed.studentName   || ''),
-                    username:      String(parsed.username       || ''),
-                    assignedLevel: Number(parsed.assignedLevel  || 1),
-                    companyName:   String(parsed.companyName    || ''),
-                    loginAt:       String(parsed.loginAt        || '')
+                    studentId:     String(parsed.studentId    || parsed.playerKey || ''),
+                    studentName:   String(parsed.studentName  || ''),
+                    username:      String(parsed.username      || ''),
+                    assignedLevel: Number(parsed.assignedLevel || 1),
+                    companyName:   String(parsed.companyName   || ''),
+                    loginAt:       String(parsed.loginAt       || '')
                 };
             }
-        } catch (e) { /* plain string UUID */ }
-        // Legacy plain string
-        if (typeof raw === 'string' && raw.length > 0) {
-            return { studentId: raw, studentName: '', username: '', assignedLevel: 1, companyName: '', loginAt: '' };
-        }
-        return null;
+        } catch (e) { /* not valid JSON — treat as plain string UUID below */ }
+        // Legacy plain string UUID stored directly
+        return { studentId: raw, studentName: '', username: '', assignedLevel: 1, companyName: '', loginAt: '' };
     } catch (e) {
         return null;
     }
@@ -106,7 +103,7 @@ function publishLeaderboardEntry() {
         score:          gameState.cash,
         netWorth:       gameState.cash,
         finalCash:      gameState.cash,
-        roundsPlayed:   MAX_ROUNDS,
+        roundsPlayed:   Math.min(gameState.round - 1, MAX_ROUNDS),
         minesOwned:     0,
         machineryCount: 0,
         companyName:    session?.companyName || '',
