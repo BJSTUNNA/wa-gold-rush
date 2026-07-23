@@ -4,6 +4,9 @@ const DICE_SIDES = 6;
 const INITIAL_CASH = 100;
 const ANIMATION_DURATION = 1000; // milliseconds
 
+const PAUSE_STATE_KEY    = 'wa_gold_rush_pause_state';
+const PLAYER_SESSION_KEY = 'wa_gold_rush_player_key';
+
 const DIG_TYPES = {
     safe: {
         name: 'Safe Dig',
@@ -36,8 +39,108 @@ const gameState = {
     cash: INITIAL_CASH,
     round: 1,
     gameOver: false,
-    isRolling: false
+    isRolling: false,
+    totalProfitLoss: 0
 };
+
+// ===== STUDENT SESSION =====
+
+/**
+ * Read the current player/student session from localStorage.
+ * Returns null if not found or invalid.
+ */
+function getStudentSession() {
+    try {
+        const raw = localStorage.getItem(PLAYER_SESSION_KEY);
+        if (!raw) return null;
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object' && parsed.studentId) {
+                return {
+                    studentId:     String(parsed.studentId),
+                    studentName:   String(parsed.studentName   || ''),
+                    username:      String(parsed.username       || ''),
+                    assignedLevel: Number(parsed.assignedLevel  || 1),
+                    companyName:   String(parsed.companyName    || ''),
+                    loginAt:       String(parsed.loginAt        || '')
+                };
+            }
+        } catch (e) { /* plain string UUID */ }
+        // Legacy plain string
+        if (typeof raw === 'string' && raw.length > 0) {
+            return { studentId: raw, studentName: '', username: '', assignedLevel: 1, companyName: '', loginAt: '' };
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
+/**
+ * Return true when teacher has paused gameplay.
+ */
+function isTeacherPaused() {
+    try {
+        return !!JSON.parse(localStorage.getItem(PAUSE_STATE_KEY))?.paused;
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
+ * Publish a leaderboard entry to the unified class records store.
+ */
+function publishLeaderboardEntry() {
+    const session = getStudentSession();
+    const studentId   = session?.studentId   || ('l1_' + Date.now());
+    const studentName = session?.studentName || 'Anonymous';
+    const username    = session?.username    || '';
+
+    const entry = {
+        studentId,
+        studentName,
+        username,
+        level:          1,
+        mode:           'level1-basic',
+        source:         'level1',
+        score:          gameState.cash,
+        netWorth:       gameState.cash,
+        finalCash:      gameState.cash,
+        roundsPlayed:   MAX_ROUNDS,
+        minesOwned:     0,
+        machineryCount: 0,
+        companyName:    session?.companyName || '',
+        totalProfitLoss: gameState.totalProfitLoss,
+        timestamp:      new Date().toISOString(),
+        updatedAt:      new Date().toISOString()
+    };
+
+    // Use shared LeaderboardStore if available
+    if (typeof LeaderboardStore !== 'undefined') {
+        LeaderboardStore.appendEntry(entry);
+        return;
+    }
+
+    // Fallback: write directly to class records key
+    try {
+        const raw    = localStorage.getItem('wa_gold_rush_class_records');
+        const parsed = raw ? JSON.parse(raw) : null;
+        let entries  = [];
+        if (Array.isArray(parsed)) {
+            entries = parsed;
+        } else if (parsed && Array.isArray(parsed.entries)) {
+            entries = parsed.entries;
+        }
+
+        const idx = entries.findIndex(e => e.studentId === studentId && e.source === 'level1');
+        if (idx >= 0) entries[idx] = entry;
+        else entries.push(entry);
+
+        localStorage.setItem('wa_gold_rush_class_records', JSON.stringify({ version: 2, entries }));
+    } catch (e) {
+        console.warn('[Level1] Failed to publish leaderboard entry:', e);
+    }
+}
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -65,8 +168,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Listen for teacher pause changes across tabs
+    window.addEventListener('storage', function(event) {
+        if (event.key === PAUSE_STATE_KEY) {
+            updatePauseBanner();
+        }
+    });
+
+    updateIdentityBanner();
+    updatePauseBanner();
     updateUI();
 });
+
+// ===== STUDENT IDENTITY DISPLAY =====
+function updateIdentityBanner() {
+    const banner = document.getElementById('student-identity-banner');
+    if (!banner) return;
+    const session = getStudentSession();
+    if (session && session.studentName) {
+        banner.textContent = `👤 ${session.studentName} — Level 1 Basic Mining`;
+        banner.classList.remove('hidden');
+    } else {
+        banner.classList.add('hidden');
+    }
+}
+
+function updatePauseBanner() {
+    const banner = document.getElementById('pause-banner');
+    if (!banner) return;
+    const paused = isTeacherPaused();
+    banner.classList.toggle('hidden', !paused);
+    const playBtn = document.getElementById('playButton');
+    if (playBtn && !gameState.gameOver) playBtn.disabled = paused;
+}
 
 // ===== UTILITY FUNCTIONS =====
 function rollDice() {
@@ -214,6 +348,9 @@ function displayGameOver() {
     gameState.gameOver = true;
     const playBtn = document.getElementById('playButton');
     if (playBtn) playBtn.disabled = true;
+
+    // Publish unified leaderboard entry
+    publishLeaderboardEntry();
 }
 
 // Reset the game to initial state
@@ -226,6 +363,7 @@ function resetGame() {
     gameState.cash = INITIAL_CASH;
     gameState.round = 1;
     gameState.gameOver = false;
+    gameState.totalProfitLoss = 0;
 
     // Reset investment inputs
     Object.values(DIG_TYPES).forEach(dig => {
@@ -234,7 +372,7 @@ function resetGame() {
     });
 
     const playBtn = document.getElementById('playButton');
-    if (playBtn) playBtn.disabled = false;
+    if (playBtn) playBtn.disabled = isTeacherPaused();
 
     updateUI();
     updateTotalInvestment();
@@ -251,6 +389,11 @@ function playRound() {
     
     if (gameState.isRolling) {
         console.log('Already rolling, ignoring click');
+        return;
+    }
+
+    if (isTeacherPaused()) {
+        alert('Gameplay is paused by your teacher.');
         return;
     }
 
@@ -298,6 +441,7 @@ function playRound() {
             });
 
             gameState.cash += roundProfit;
+            gameState.totalProfitLoss += roundProfit;
 
             displayResults(results);
 
@@ -309,7 +453,7 @@ function playRound() {
             }
 
             gameState.isRolling = false;
-            if (playBtn) playBtn.disabled = false;
+            if (playBtn) playBtn.disabled = isTeacherPaused();
         }, ANIMATION_DURATION);
 
     } catch (error) {
