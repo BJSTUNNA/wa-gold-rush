@@ -68,29 +68,55 @@ class TeacherDashboard {
     }
 
     /**
-     * Bulk import students from CSV or JSON
+     * Bulk import students from CSV or JSON.
+     * Returns { added: [...], skipped: [...] }
      */
     bulkImportStudents(data, format = 'csv') {
-        let students = [];
-        
+        let rawStudents = [];
+
         if (format === 'csv') {
             // Parse CSV: name,email,level
             const lines = data.trim().split('\n');
-            students = lines.slice(1).map(line => {
-                const [name, email, level] = line.split(',').map(s => s.trim());
-                return { name, email, level: parseInt(level) || 1 };
-            });
+
+            // Bug 1: detect header row by checking if the first line's third field
+            // is a valid level integer (1–5). If not, treat it as a header and skip it.
+            const firstFields = lines[0].split(',').map(s => s.trim());
+            const firstLevelVal = parseInt(firstFields[2], 10);
+            const firstLineIsHeader = isNaN(firstLevelVal) || firstLevelVal < 1 || firstLevelVal > 5;
+
+            rawStudents = (firstLineIsHeader ? lines.slice(1) : lines)
+                .filter(line => line.trim() !== '')  // Bug 2: drop blank/whitespace-only lines
+                .map(line => {
+                    const [name, email, level] = line.split(',').map(s => s.trim());
+                    return { name, email, level: parseInt(level, 10) || 1 };
+                });
         } else if (format === 'json') {
-            students = JSON.parse(data);
+            const parsed = JSON.parse(data);
+            // Bug 3: validate the parsed result is an array
+            if (!Array.isArray(parsed)) {
+                throw new Error('JSON must be an array of student objects, e.g. [{"name":"Alex","email":"","level":2}]');
+            }
+            // Bug 4: normalise common field-name variants
+            rawStudents = parsed.map(item => ({
+                name: item.name || item.Name || item.studentName || item.student_name || '',
+                email: item.email || item.Email || '',
+                level: parseInt(item.level || item.Level || item.assignedLevel || 1, 10)
+            }));
         }
-        
-        const addedStudents = [];
-        students.forEach(studentData => {
-            const student = this.addStudent(studentData);
-            addedStudents.push(student);
+
+        const added = [];
+        const skipped = [];
+
+        rawStudents.forEach((studentData, index) => {
+            // Bug 4 / Bug 7: skip records with no name after normalisation
+            if (!studentData.name) {
+                skipped.push({ row: index + 1, reason: 'Missing name' });
+                return;
+            }
+            added.push(this.addStudent(studentData));
         });
-        
-        return addedStudents;
+
+        return { added, skipped };
     }
 
     /**

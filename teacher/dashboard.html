@@ -67,7 +67,24 @@
                     <button id="importBtn" class="btn">Import Students</button>
                 </div>
             </div>
-            <textarea id="bulkInput" rows="6" placeholder="name,email,level&#10;Alex,alex@school.edu,2"></textarea>
+            <textarea id="bulkInput" rows="6" placeholder="name,email,level&#10;Alex,alex@school.edu,2&#10;Jordan,jordan@school.edu,3"></textarea>
+        </section>
+
+        <section class="card">
+            <h2>Student Roster</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Assigned Level</th>
+                        <th>Net Worth</th>
+                        <th>Round</th>
+                        <th>Last Played</th>
+                    </tr>
+                </thead>
+                <tbody id="rosterBody"></tbody>
+            </table>
         </section>
 
         <section class="card">
@@ -170,9 +187,29 @@
             `).join('');
         }
 
+        function renderRoster() {
+            const body = document.getElementById('rosterBody');
+            const students = dashboard.getAllStudents();
+            if (!students.length) {
+                body.innerHTML = '<tr><td colspan="6">No students added yet.</td></tr>';
+                return;
+            }
+            body.innerHTML = students.map(s => `
+                <tr>
+                    <td>${s.name}</td>
+                    <td>${s.email || '—'}</td>
+                    <td>${s.level}</td>
+                    <td>$${Number(s.gameState.netWorth || 0).toFixed(2)}</td>
+                    <td>${s.gameState.round || 1}</td>
+                    <td>${s.gameState.lastPlayed ? new Date(s.gameState.lastPlayed).toLocaleString() : 'Never'}</td>
+                </tr>
+            `).join('');
+        }
+
         function refresh() {
             renderPauseStatus();
             renderStats();
+            renderRoster();
             renderLeaderboard();
         }
 
@@ -190,6 +227,15 @@
             refresh();
         });
 
+        document.getElementById('importFormat').addEventListener('change', function () {
+            const textarea = document.getElementById('bulkInput');
+            if (this.value === 'json') {
+                textarea.placeholder = '[{"name":"Alex","email":"alex@school.edu","level":2},{"name":"Jordan","email":"","level":3}]';
+            } else {
+                textarea.placeholder = 'name,email,level\nAlex,alex@school.edu,2\nJordan,jordan@school.edu,3';
+            }
+        });
+
         document.getElementById('importBtn').addEventListener('click', () => {
             const data = document.getElementById('bulkInput').value.trim();
             if (!data) {
@@ -199,7 +245,12 @@
             const format = document.getElementById('importFormat').value;
             try {
                 const imported = dashboard.bulkImportStudents(data, format);
-                alert(`Imported ${imported.length} students.`);
+                let msg = `Imported ${imported.added.length} students.`;
+                if (imported.skipped.length > 0) {
+                    msg += `\nSkipped ${imported.skipped.length} rows:\n` +
+                        imported.skipped.map(s => `  Row ${s.row}: ${s.reason}`).join('\n');
+                }
+                alert(msg);
                 refresh();
             } catch (error) {
                 alert(`Import failed: ${error.message}`);
