@@ -731,8 +731,10 @@ function logoutCompetitionSession() {
     sessionStorage.removeItem(STUDENT_SESSION_KEY);
     document.getElementById('studentIdInput').value = '';
     document.getElementById('studentNameInput').value = '';
+    document.getElementById('companyNameInput').value = DEFAULT_COMPANY_NAME;
     gameState.player.studentId = '';
     gameState.player.studentName = '';
+    gameState.player.companyName = DEFAULT_COMPANY_NAME;
     gameState.saveToLocalStorage();
     updateAllUI();
 }
