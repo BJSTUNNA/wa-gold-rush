@@ -870,13 +870,10 @@ function loadGame() {
     }
     const savedLevel = gameState.assignedLevel;
     const urlLevel = getAssignedLevelFromUrl();
-    if (savedLevel !== urlLevel) {
-        const confirmed = confirm(
-            `This save was created on Level ${savedLevel}, but you are playing Level ${urlLevel}. Continue with Level ${urlLevel}?`
-        );
-        if (confirmed) {
-            gameState.assignedLevel = urlLevel;
-        }
+    if (savedLevel !== urlLevel && !confirm(
+        `This save was created on Level ${savedLevel}, but you are playing Level ${urlLevel}. Continue with Level ${urlLevel}?`
+    )) {
+        // Keep the saved level — already restored by loadFromLocalStorage
     } else {
         gameState.assignedLevel = urlLevel;
     }

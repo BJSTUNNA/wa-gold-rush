@@ -37,11 +37,10 @@ class TeacherDashboard {
      */
     addStudent(studentData) {
         const autoId = this.generateStudentId();
+        const rawDisplayId = (typeof studentData.displayId === 'string') ? studentData.displayId.trim() : '';
         const student = {
             id: autoId,
-            displayId: (typeof studentData.displayId === 'string' && studentData.displayId.trim())
-                ? studentData.displayId.trim()
-                : autoId,
+            displayId: rawDisplayId || autoId,
             name: studentData.name,
             email: studentData.email || '',
             level: studentData.level || 1,
