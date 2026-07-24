@@ -68,29 +68,68 @@ class TeacherDashboard {
     }
 
     /**
-     * Bulk import students from CSV or JSON
+     * Bulk import students from CSV or JSON.
+     * Returns { added: [...], skipped: [...] }
      */
     bulkImportStudents(data, format = 'csv') {
-        let students = [];
-        
+        let rawStudents = [];
+
         if (format === 'csv') {
             // Parse CSV: name,email,level
             const lines = data.trim().split('\n');
-            students = lines.slice(1).map(line => {
-                const [name, email, level] = line.split(',').map(s => s.trim());
-                return { name, email, level: parseInt(level) || 1 };
+
+            // Bug 1: detect header row by checking if the first line's third field
+            // is a valid level integer (1–5). If not, treat it as a header and skip it.
+            const firstFields = lines[0].split(',').map(s => s.trim());
+            const firstLevelVal = firstFields.length >= 3 ? parseInt(firstFields[2], 10) : NaN;
+            const firstLineIsHeader = isNaN(firstLevelVal) || firstLevelVal < 1 || firstLevelVal > 5;
+            const dataLines = firstLineIsHeader ? lines.slice(1) : lines;
+
+            const headerOffset = firstLineIsHeader ? 1 : 0;
+
+            // Preserve original 1-based line numbers in the original pasted input (including header, if present)
+            dataLines.forEach((line, idx) => {
+                const originalRow = idx + 1 + headerOffset;
+                if (line.trim() === '') return;  // Bug 2: skip blank/whitespace-only lines
+                if (fields.length < 3) {
+                    rawStudents.push({ _row: originalRow, _skipReason: `fewer than 3 fields` });
+                    return;
+                }
+                const [name, email, level] = fields;
+                rawStudents.push({ _row: originalRow, name, email, level: parseInt(level, 10) || 1 });
             });
         } else if (format === 'json') {
-            students = JSON.parse(data);
+            const parsed = JSON.parse(data);
+            // Bug 3: validate the parsed result is an array
+            if (!Array.isArray(parsed)) {
+                throw new TypeError('JSON must be an array of student objects, e.g. [{"name":"Alex","email":"","level":2}]');
+            }
+            // Bug 4: normalise common field-name variants; use ?? to avoid truthy-string short-circuit
+            rawStudents = parsed.map((item, idx) => ({
+                _row: idx + 1,
+                name: item.name ?? item.Name ?? item.studentName ?? item.student_name ?? '',
+                email: item.email ?? item.Email ?? '',
+                level: parseInt(item.level ?? item.Level ?? item.assignedLevel, 10) || 1
+            }));
         }
-        
-        const addedStudents = [];
-        students.forEach(studentData => {
-            const student = this.addStudent(studentData);
-            addedStudents.push(student);
+
+        const added = [];
+        const skipped = [];
+
+        rawStudents.forEach(studentData => {
+            if (studentData._skipReason) {
+                skipped.push({ row: studentData._row || '?', reason: studentData._skipReason });
+                return;
+            }
+            // Bug 4 / Bug 7: skip records with no name after normalisation
+            if (!studentData.name) {
+                skipped.push({ row: studentData._row || '?', reason: 'Missing name' });
+                return;
+            }
+            added.push(this.addStudent(studentData));
         });
-        
-        return addedStudents;
+
+        return { added, skipped };
     }
 
     /**
