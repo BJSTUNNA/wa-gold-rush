@@ -22,6 +22,9 @@
         .inline-actions button { width: auto; padding: 6px 10px; }
         .edit-input { width: 100%; margin: 0; padding: 6px; }
         .edit-select { width: 100%; margin: 0; padding: 6px; }
+        .toggle-row { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; }
+        .toggle-row input[type="checkbox"] { width: auto; margin-top: 2px; }
+        .toggle-copy strong { display: block; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -36,7 +39,15 @@
                 <button id="resumeClassBtn" class="btn-secondary">Resume Class Gameplay</button>
                 <button id="refreshBtn" class="btn">Refresh Stats</button>
             </div>
+            <label class="toggle-row" for="strictModeToggle">
+                <input id="strictModeToggle" type="checkbox">
+                <span class="toggle-copy">
+                    <strong>Strict Classroom Mode (Competition Lock)</strong>
+                    <span class="muted">When ON: students can still play and save, but leaderboard/class rankings/records participation requires login. When OFF: all features remain available without login.</span>
+                </span>
+            </label>
             <p id="pauseStatus" class="muted"></p>
+            <p id="strictModeStatus" class="muted"></p>
         </section>
 
         <section class="card">
@@ -120,6 +131,7 @@
     <script>
         const CLASS_RECORDS_KEY = 'wa_gold_rush_class_records';
         const PAUSE_STATE_KEY = 'wa_gold_rush_pause_state';
+        const STRICT_MODE_KEY = 'wa_gold_rush_strict_mode';
         const dashboard = new TeacherDashboard();
         dashboard.loadFromLocalStorage();
 
@@ -152,6 +164,22 @@
                 : 'Gameplay is active.';
         }
 
+        function isStrictModeEnabled() {
+            try {
+                return !!JSON.parse(localStorage.getItem(STRICT_MODE_KEY))?.enabled;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function renderStrictModeStatus() {
+            const strictModeEnabled = isStrictModeEnabled();
+            document.getElementById('strictModeToggle').checked = strictModeEnabled;
+            document.getElementById('strictModeStatus').textContent = strictModeEnabled
+                ? 'Competition lock is ON. Login is required for leaderboard, rankings, and shared records.'
+                : 'Competition lock is OFF. Competition features remain open.';
+        }
+
         function renderStats() {
             syncFromRecords();
             const stats = dashboard.calculateClassStats();
@@ -165,9 +193,9 @@
 
             document.getElementById('classStats').innerHTML = `
                 Total students: <strong>${stats.totalStudents}</strong><br>
-                Wealthiest player: <strong>${stats.wealthiestStudent?.gameState?.companyName || stats.wealthiestStudent?.name || 'N/A'}</strong><br>
+                Wealthiest player: <strong>${escHtml(stats.wealthiestStudent?.gameState?.companyName || stats.wealthiestStudent?.name || 'N/A')}</strong><br>
                 Most mines owned: <strong>${stats.mostMinesOwned}</strong><br>
-                Most profitable strategy: <strong>${topStrategy}</strong><br>
+                Most profitable strategy: <strong>${escHtml(topStrategy)}</strong><br>
                 Average class wealth: <strong>$${(stats.averageNetWorth || 0).toFixed(2)}</strong>
             `;
         }
@@ -182,12 +210,12 @@
             body.innerHTML = records.map((record, index) => `
                 <tr>
                     <td>${index + 1}</td>
-                    <td>${record.studentName || 'Unknown'}</td>
-                    <td>${record.companyName || 'Untitled'}</td>
+                    <td>${escHtml(record.studentName || 'Unknown')}</td>
+                    <td>${escHtml(record.companyName || 'Untitled')}</td>
                     <td>$${Number(record.netWorth || 0).toFixed(2)}</td>
                     <td>${record.minesOwned || 0}</td>
-                    <td>${record.strategyLabel || 'N/A'}</td>
-                    <td>${record.updatedAt ? new Date(record.updatedAt).toLocaleString() : 'N/A'}</td>
+                    <td>${escHtml(record.strategyLabel || 'N/A')}</td>
+                    <td>${escHtml(record.updatedAt ? new Date(record.updatedAt).toLocaleString() : 'N/A')}</td>
                 </tr>
             `).join('');
         }
@@ -243,6 +271,7 @@
 
         function refresh() {
             renderPauseStatus();
+            renderStrictModeStatus();
             renderStats();
             renderRoster();
             renderLeaderboard();
@@ -350,6 +379,10 @@
         });
 
         document.getElementById('refreshBtn').addEventListener('click', refresh);
+        document.getElementById('strictModeToggle').addEventListener('change', (event) => {
+            localStorage.setItem(STRICT_MODE_KEY, JSON.stringify({ enabled: !!event.target.checked }));
+            renderStrictModeStatus();
+        });
         refresh();
     </script>
 </body>

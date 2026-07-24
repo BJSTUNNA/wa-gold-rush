@@ -184,6 +184,59 @@
             text-align: center;
         }
 
+        .competition-login {
+            background: #f9f4e3;
+            border: 2px solid #f4b400;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        .competition-login h2 {
+            margin-top: 0;
+            color: #1a1a1a;
+        }
+
+        .login-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin: 12px 0;
+        }
+
+        .login-grid label {
+            font-size: 13px;
+            color: #444;
+            font-weight: bold;
+        }
+
+        .login-grid input {
+            width: 100%;
+            margin-top: 6px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .login-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .login-actions .btn-play,
+        .login-actions .btn-teacher {
+            width: auto;
+        }
+
+        #competitionLoginMessage {
+            margin: 0;
+            color: #444;
+            font-size: 13px;
+        }
+
         .admin-section h2 {
             color: #666;
             margin-top: 0;
@@ -310,6 +363,26 @@
                 </article>
             </section>
 
+            <section class="competition-login" aria-label="Competition login">
+                <h2>🏆 Student Competition Login</h2>
+                <p>Free-play is always available. Log in here to participate in leaderboard, class rankings, and shared classroom competition records.</p>
+                <div class="login-grid">
+                    <label>
+                        Student ID
+                        <input id="competitionStudentId" type="text" maxlength="40" placeholder="e.g. STU001">
+                    </label>
+                    <label>
+                        Student Name
+                        <input id="competitionStudentName" type="text" maxlength="60" placeholder="e.g. Alex">
+                    </label>
+                </div>
+                <div class="login-actions">
+                    <button id="competitionLoginBtn" class="btn-play" type="button">Log In for Competition</button>
+                    <button id="competitionLogoutBtn" class="btn-teacher" type="button">Log Out</button>
+                </div>
+                <p id="competitionLoginMessage">Competition Status: Free-play mode</p>
+            </section>
+
             <div class="divider"></div>
 
             <!-- TEACHER SECTION -->
@@ -320,5 +393,88 @@
             </section>
         </main>
     </div>
+    <script>
+        const TEACHER_DASHBOARD_KEY = 'teacher_dashboard';
+        const STUDENT_SESSION_KEY = 'wa_gold_rush_student_session';
+
+        function getTeacherStudents() {
+            try {
+                const data = JSON.parse(localStorage.getItem(TEACHER_DASHBOARD_KEY));
+                return Array.isArray(data?.students) ? data.students : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function getStudentSession() {
+            try {
+                const session = JSON.parse(sessionStorage.getItem(STUDENT_SESSION_KEY));
+                return session && typeof session === 'object' ? session : null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function findMatchingStudent(studentId, studentName) {
+            const id = String(studentId || '').trim();
+            const name = String(studentName || '').trim().toLowerCase();
+            if (!id || !name) return null;
+            return getTeacherStudents().find(student =>
+                String(student?.id || '').trim() === id &&
+                String(student?.name || '').trim().toLowerCase() === name
+            ) || null;
+        }
+
+        function renderCompetitionMessage(text) {
+            document.getElementById('competitionLoginMessage').textContent = text;
+        }
+
+        function renderCompetitionSessionStatus() {
+            const session = getStudentSession();
+            if (!session) {
+                renderCompetitionMessage('Competition Status: Free-play mode');
+                return;
+            }
+
+            const matched = findMatchingStudent(session.studentId, session.studentName);
+            if (!matched) {
+                sessionStorage.removeItem(STUDENT_SESSION_KEY);
+                renderCompetitionMessage('Competition Status: Session invalid. Please log in again or contact your teacher.');
+                return;
+            }
+
+            renderCompetitionMessage(`Competition Status: Logged in as ${matched.name} (${matched.id})`);
+            document.getElementById('competitionStudentId').value = matched.id;
+            document.getElementById('competitionStudentName').value = matched.name;
+        }
+
+        document.getElementById('competitionLoginBtn').addEventListener('click', () => {
+            const studentId = document.getElementById('competitionStudentId').value.trim();
+            const studentName = document.getElementById('competitionStudentName').value.trim();
+            if (!studentId || !studentName) {
+                renderCompetitionMessage('Enter both Student ID and Student Name to log in for competition.');
+                return;
+            }
+
+            const matched = findMatchingStudent(studentId, studentName);
+            if (!matched) {
+                renderCompetitionMessage('Login failed. Please verify your Student ID and Student Name with your teacher.');
+                return;
+            }
+
+            sessionStorage.setItem(STUDENT_SESSION_KEY, JSON.stringify({
+                studentId: matched.id,
+                studentName: matched.name
+            }));
+            renderCompetitionSessionStatus();
+        });
+
+        document.getElementById('competitionLogoutBtn').addEventListener('click', () => {
+            sessionStorage.removeItem(STUDENT_SESSION_KEY);
+            renderCompetitionSessionStatus();
+        });
+
+        renderCompetitionSessionStatus();
+    </script>
 </body>
 </html>

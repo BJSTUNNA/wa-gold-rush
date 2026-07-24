@@ -91,12 +91,15 @@
 
                 <section class="panel-section">
                     <h2>🏢 Company & Student Identity</h2>
+                    <p id="competition-status" class="competition-status">Competition Status: Free-play mode</p>
                     <div class="identity-grid">
                         <label>Student ID <input id="studentIdInput" type="text" maxlength="30" placeholder="e.g. STU001"></label>
                         <label>Student Name <input id="studentNameInput" type="text" maxlength="50" placeholder="e.g. Alex"></label>
                         <label>Company Name <input id="companyNameInput" type="text" maxlength="50" placeholder="e.g. Perth Prospectors"></label>
                     </div>
                     <button id="saveIdentityButton" class="btn-secondary">Save Identity</button>
+                    <button id="competitionLogoutButton" class="btn-secondary">Log Out of Competition</button>
+                    <a class="btn-nav" href="../../index.html">Go to Home Login</a>
                 </section>
 
                 <!-- MACHINERY SHOP -->
@@ -139,6 +142,7 @@
 
                 <section class="panel-section">
                     <h2>🏆 Local Classroom Leaderboard</h2>
+                    <p id="competition-lock-message" class="competition-lock-message hidden"></p>
                     <div id="leaderboard-summary" class="leaderboard-summary"></div>
                     <div id="leaderboard-list"></div>
                 </section>
