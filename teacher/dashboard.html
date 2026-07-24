@@ -53,6 +53,7 @@
         <section class="card">
             <h2>Student Management</h2>
             <div class="grid">
+                <label>Student ID <input id="studentDisplayId" type="text" placeholder="e.g. STU001"></label>
                 <label>Name <input id="studentName" type="text" placeholder="Student name"></label>
                 <label>Email (optional) <input id="studentEmail" type="email" placeholder="student@example.com"></label>
                 <label>Assigned Level
@@ -90,6 +91,7 @@
             <table>
                 <thead>
                     <tr>
+                        <th>Student ID</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Assigned Level</th>
@@ -233,17 +235,19 @@
             const body = document.getElementById('rosterBody');
             const students = dashboard.getAllStudents();
             if (!students.length) {
-                body.innerHTML = '<tr><td colspan="7">No students added yet.</td></tr>';
+                body.innerHTML = '<tr><td colspan="8">No students added yet.</td></tr>';
                 return;
             }
 
             body.innerHTML = students.map(s => {
                 const id = escHtml(s.id);
+                const displayId = escHtml(s.displayId || s.id || '');
                 const name = escHtml(s.name || '');
                 const email = escHtml(s.email || '');
                 const level = Number(s.level) || 1;
                 return `
                 <tr>
+                    <td><input class="edit-input" data-field="displayId" data-id="${id}" value="${displayId}" aria-label="Student ID for ${name || 'student'}"></td>
                     <td><input class="edit-input" data-field="name" data-id="${id}" value="${name}" aria-label="Name for ${name || 'student'}"></td>
                     <td><input class="edit-input" data-field="email" data-id="${id}" value="${email}" aria-label="Email for ${name || 'student'}"></td>
                     <td>
@@ -278,9 +282,11 @@
         }
 
         function saveRosterRow(studentId) {
+            const displayIdInput = document.querySelector(`input[data-field="displayId"][data-id="${CSS.escape(studentId)}"]`);
             const nameInput = document.querySelector(`input[data-field="name"][data-id="${CSS.escape(studentId)}"]`);
             const emailInput = document.querySelector(`input[data-field="email"][data-id="${CSS.escape(studentId)}"]`);
             const levelInput = document.querySelector(`select[data-field="level"][data-id="${CSS.escape(studentId)}"]`);
+            const displayId = (displayIdInput?.value || '').trim();
             const name = (nameInput?.value || '').trim();
             const email = (emailInput?.value || '').trim();
             const level = parseInt(levelInput?.value || '1', 10);
@@ -290,7 +296,7 @@
                 return;
             }
 
-            const result = dashboard.updateStudent(studentId, { name, email, level });
+            const result = dashboard.updateStudent(studentId, { displayId, name, email, level });
             if (!result.success) {
                 alert(`Save failed: ${result.error || 'Unknown error'}`);
                 return;
@@ -328,10 +334,12 @@
                 return;
             }
             dashboard.addStudent({
+                displayId: document.getElementById('studentDisplayId').value.trim(),
                 name,
                 email: document.getElementById('studentEmail').value.trim(),
                 level: parseInt(document.getElementById('studentLevel').value, 10)
             });
+            document.getElementById('studentDisplayId').value = '';
             document.getElementById('studentName').value = '';
             document.getElementById('studentEmail').value = '';
             document.getElementById('studentLevel').value = '2';

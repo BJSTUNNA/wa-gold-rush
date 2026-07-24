@@ -581,8 +581,8 @@ function playRound() {
     });
 
     gameState.cash += roundProfit;
-    const totalRoundChange = roundProfit + roundEffects.cashPenalty;
-    gameState.totalProfitLoss += totalRoundChange;
+    const totalRoundChange = roundProfit + roundEffects.cashPenalty; // for display only
+    gameState.totalProfitLoss += roundProfit; // cashPenalty already deducted from cash directly
     gameState.roundHistory.push({
         round: gameState.round,
         event: event ? event.id : null,
@@ -677,11 +677,11 @@ function getStoredStudentSession() {
 
 function getMatchedStudentFromSession(session) {
     if (!session) return null;
-    const sessionId = String(session.studentId || '').trim();
+    const sessionId = String(session.studentId || '').trim().toLowerCase();
     const sessionName = String(session.studentName || '').trim().toLowerCase();
     if (!sessionId || !sessionName) return null;
     return getTeacherStudents().find(student =>
-        String(student?.id || '').trim() === sessionId &&
+        String(student?.displayId || student?.id || '').trim().toLowerCase() === sessionId &&
         String(student?.name || '').trim().toLowerCase() === sessionName
     ) || null;
 }
@@ -706,10 +706,10 @@ function getCompetitionContext() {
 function applyCompetitionSessionToIdentity(updateInputs = true) {
     const competition = getCompetitionContext();
     if (!competition.isLoggedIn) return competition;
-    gameState.player.studentId = competition.matchedStudent.id;
+    gameState.player.studentId = competition.matchedStudent.displayId || competition.matchedStudent.id;
     gameState.player.studentName = competition.matchedStudent.name;
     if (updateInputs) {
-        document.getElementById('studentIdInput').value = competition.matchedStudent.id;
+        document.getElementById('studentIdInput').value = competition.matchedStudent.displayId || competition.matchedStudent.id;
         document.getElementById('studentNameInput').value = competition.matchedStudent.name;
     }
     return competition;
@@ -719,7 +719,7 @@ function updateCompetitionStatus() {
     const competition = applyCompetitionSessionToIdentity(false);
     const statusEl = document.getElementById('competition-status');
     if (competition.isLoggedIn) {
-        statusEl.textContent = `Competition Status: Logged in as ${competition.matchedStudent.name} (${competition.matchedStudent.id})`;
+        statusEl.textContent = `Competition Status: Logged in as ${competition.matchedStudent.name} (${competition.matchedStudent.displayId || competition.matchedStudent.id})`;
         return;
     }
     statusEl.textContent = competition.strictModeEnabled
@@ -788,12 +788,17 @@ function syncPlayerRecord() {
         return;
     }
 
+    // Don't publish anonymous records — require either a competition login or a non-empty student identity
+    if (!competition.isLoggedIn && !gameState.player.studentId) {
+        return;
+    }
+
     const playerKey = getOrCreatePlayerKey();
     const records = getClassRecords();
     const totalRounds = Math.max(1, gameState.round - 1);
 
     const studentId = competition.isLoggedIn
-        ? competition.matchedStudent.id
+        ? (competition.matchedStudent.displayId || competition.matchedStudent.id)
         : (gameState.player.studentId || playerKey);
     const studentName = competition.isLoggedIn
         ? competition.matchedStudent.name
@@ -824,10 +829,14 @@ function syncPlayerRecord() {
 
 function syncTeacherDashboardRecord(record) {
     if (typeof TeacherDashboard === 'undefined') return;
+    const competition = getCompetitionContext();
+    if (!competition.isLoggedIn) return;
     const dashboard = new TeacherDashboard();
     dashboard.loadFromLocalStorage();
-    dashboard.syncFromPlayerRecord(record);
-    dashboard.saveToLocalStorage();
+    const updated = dashboard.syncFromPlayerRecord(record);
+    if (updated) {
+        dashboard.saveToLocalStorage();
+    }
 }
 
 function isTeacherPaused() {
@@ -859,7 +868,18 @@ function loadGame() {
         alert('❌ No save data found');
         return;
     }
-    gameState.assignedLevel = getAssignedLevelFromUrl();
+    const savedLevel = gameState.assignedLevel;
+    const urlLevel = getAssignedLevelFromUrl();
+    if (savedLevel !== urlLevel) {
+        const confirmed = confirm(
+            `This save was created on Level ${savedLevel}, but you are playing Level ${urlLevel}. Continue with Level ${urlLevel}?`
+        );
+        if (confirmed) {
+            gameState.assignedLevel = urlLevel;
+        }
+    } else {
+        gameState.assignedLevel = urlLevel;
+    }
     ensureInvestmentPlansForOwnedMines();
     hydrateIdentityInputs();
     updateAssignedLevelBadge();
@@ -869,11 +889,19 @@ function loadGame() {
     alert('✅ Game loaded successfully!');
 }
 
+function removePlayerRecord(playerKey) {
+    const records = getClassRecords();
+    const filtered = records.filter(r => r.playerKey !== playerKey);
+    saveClassRecords(filtered);
+}
+
 function resetGame() {
     if (!confirm('Start a new game? All progress will be lost.')) return;
+    const playerKey = getOrCreatePlayerKey();
     gameState.reset();
     gameState.assignedLevel = getAssignedLevelFromUrl();
     localStorage.removeItem('level2_autosave');
+    removePlayerRecord(playerKey);
     hydrateIdentityInputs();
     updateAssignedLevelBadge();
     updateAllUI();

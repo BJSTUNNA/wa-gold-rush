@@ -365,7 +365,7 @@
 
             <section class="competition-login" aria-label="Competition login">
                 <h2>🏆 Student Competition Login</h2>
-                <p>Free-play is always available. Log in here to participate in leaderboard, class rankings, and shared classroom competition records.</p>
+                <p>Log in here before playing to participate in the leaderboard, class rankings, and shared classroom competition records. Your login carries into the game automatically.</p>
                 <div class="login-grid">
                     <label>
                         Student ID
@@ -416,11 +416,11 @@
         }
 
         function findMatchingStudent(studentId, studentName) {
-            const id = String(studentId || '').trim();
+            const id = String(studentId || '').trim().toLowerCase();
             const name = String(studentName || '').trim().toLowerCase();
             if (!id || !name) return null;
             return getTeacherStudents().find(student =>
-                String(student?.id || '').trim() === id &&
+                String(student?.displayId || student?.id || '').trim().toLowerCase() === id &&
                 String(student?.name || '').trim().toLowerCase() === name
             ) || null;
         }
@@ -443,8 +443,8 @@
                 return;
             }
 
-            renderCompetitionMessage(`Competition Status: Logged in as ${matched.name} (${matched.id})`);
-            document.getElementById('competitionStudentId').value = matched.id;
+            renderCompetitionMessage(`Competition Status: Logged in as ${matched.name} (${matched.displayId || matched.id})`);
+            document.getElementById('competitionStudentId').value = matched.displayId || matched.id;
             document.getElementById('competitionStudentName').value = matched.name;
         }
 
@@ -463,7 +463,7 @@
             }
 
             sessionStorage.setItem(STUDENT_SESSION_KEY, JSON.stringify({
-                studentId: matched.id,
+                studentId: matched.displayId || matched.id,
                 studentName: matched.name
             }));
             renderCompetitionSessionStatus();
