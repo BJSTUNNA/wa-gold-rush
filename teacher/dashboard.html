@@ -209,8 +209,8 @@
                     <td>${escHtml(s.email || '—')}</td>
                     <td>${escHtml(s.level)}</td>
                     <td>$${Number(s.gameState.netWorth || 0).toFixed(2)}</td>
-                    <td>${s.gameState.round || 1}</td>
-                    <td>${s.gameState.lastPlayed ? new Date(s.gameState.lastPlayed).toLocaleString() : 'Never'}</td>
+                    <td>${Number(s.gameState.round) || 1}</td>
+                    <td>${escHtml(s.gameState.lastPlayed ? new Date(s.gameState.lastPlayed).toLocaleString() : 'Never')}</td>
                 </tr>
             `).join('');
         }
