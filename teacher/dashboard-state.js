@@ -6,6 +6,7 @@
 
 const STUDENTS_STORE_KEY  = 'wa_gold_rush_students_v2';
 const TEACHER_LEGACY_KEY  = 'teacher_dashboard';
+const MAX_USERNAME_LENGTH = 12;
 
 class TeacherDashboard {
     constructor() {
@@ -56,7 +57,7 @@ class TeacherDashboard {
         const base = (name || 'student')
             .toLowerCase()
             .replace(/[^a-z0-9]/g, '')
-            .slice(0, 12) || 'student';
+            .slice(0, MAX_USERNAME_LENGTH) || 'student';
         let candidate = base;
         let suffix = 1;
         while (this.students.some(s => s.username === candidate && s.id !== excludeId)) {
@@ -227,12 +228,13 @@ class TeacherDashboard {
                     errors.push(`Row ${i + 1}: missing name`);
                     return;
                 }
-                // Dedupe by name (case-insensitive) to avoid accidental doubles
-                if (this.students.some(s => s.name.toLowerCase() === row.name.toLowerCase())) {
+                // Dedupe: skip if the auto-generated username for this name would collide with an existing one.
+                const candidateUsername = row.username || this.generateUsername(row.name);
+                if (this.students.some(s => s.username === candidateUsername)) {
                     skipped.push(row.name);
                     return;
                 }
-                added.push(this.addStudent(row));
+                added.push(this.addStudent({ ...row, username: candidateUsername }));
             } catch (e) {
                 errors.push(`Row ${i + 1}: ${e.message}`);
             }

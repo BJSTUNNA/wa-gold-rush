@@ -15,7 +15,8 @@
         .btn-secondary { background: #2e7d32; color: #fff; }
         .btn-danger  { background: #c62828; color: #fff; }
         .btn-info    { background: #0277bd; color: #fff; }
-        .btn-sm      { padding: 4px 10px; font-size: 12px; width: auto; }
+        .btn-sm      { padding: 4px 10px; font-size: 12px; width: auto; margin-top: 0; }
+        .btn-sm + .btn-sm { margin-left: 4px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 8px; border-bottom: 1px solid #ececec; text-align: left; vertical-align: top; }
         th { background: #f9f9f9; }
@@ -251,7 +252,7 @@
             return;
         }
         body.innerHTML = students.map(s => `
-            <tr id="row-${_esc(s.id)}">
+            <tr>
                 <td>${_esc(s.name)}</td>
                 <td><code>${_esc(s.username)}</code></td>
                 <td><code>${_esc(s.pin)}</code></td>
@@ -259,9 +260,9 @@
                 <td>${s.status === 'archived' ? '<span class="muted">archived</span>' : 'active'}</td>
                 <td class="muted">${s.lastLoginAt ? new Date(s.lastLoginAt).toLocaleString() : '—'}</td>
                 <td>
-                    <button class="btn-info btn-sm student-edit-btn"   data-id="${_esc(s.id)}">✏️ Edit</button>
-                    <button class="btn btn-sm student-reset-btn"       data-id="${_esc(s.id)}" style="margin-left:4px;">🔑 Reset</button>
-                    <button class="btn-danger btn-sm student-delete-btn" data-id="${_esc(s.id)}" style="margin-left:4px;">🗑 Delete</button>
+                    <button class="btn-info btn-sm student-edit-btn"    data-id="${_esc(s.id)}">✏️ Edit</button>
+                    <button class="btn btn-sm student-reset-btn"        data-id="${_esc(s.id)}">🔑 Reset</button>
+                    <button class="btn-danger btn-sm student-delete-btn" data-id="${_esc(s.id)}">🗑 Delete</button>
                 </td>
             </tr>
         `).join('');
@@ -326,13 +327,18 @@
         renderLeaderboard(currentLeaderboardFilter);
     }
 
-    // ── Escape helper ─────────────────────────────────────────────────────────
+    // ── Escape helpers ────────────────────────────────────────────────────────
     function _esc(str) {
         return String(str || '')
             .replace(/&/g,'&amp;')
             .replace(/</g,'&lt;')
             .replace(/>/g,'&gt;')
             .replace(/"/g,'&quot;');
+    }
+
+    /** Wrap a value in CSV-safe double quotes, escaping internal quotes. */
+    function _csvEsc(v) {
+        return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
     }
 
     // ── Student actions ───────────────────────────────────────────────────────
@@ -429,18 +435,16 @@
 
     document.getElementById('copyAllCredentialsBtn').addEventListener('click', () => {
         const logins = dashboard.getAllStudentLogins();
-        const csvEsc = v => '"' + String(v).replace(/"/g, '""') + '"';
         const text = ['Name,Username,PIN,Level',
-            ...logins.map(l => [l.name, l.username, l.pin, l.level].map(csvEsc).join(','))
+            ...logins.map(l => [l.name, l.username, l.pin, l.level].map(_csvEsc).join(','))
         ].join('\n');
         navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!'), () => alert('Copy failed — try selecting the table manually.'));
     });
 
     document.getElementById('exportLoginsBtn').addEventListener('click', () => {
         const logins = dashboard.getAllStudentLogins();
-        const csvEsc = v => '"' + String(v).replace(/"/g, '""') + '"';
         const csv = ['Name,Username,PIN,Level,Status',
-            ...logins.map(l => [l.name, l.username, l.pin, l.level, l.status].map(csvEsc).join(','))
+            ...logins.map(l => [l.name, l.username, l.pin, l.level, l.status].map(_csvEsc).join(','))
         ].join('\n');
         const blob = new Blob([csv], { type: 'text/csv' });
         const url  = URL.createObjectURL(blob);
