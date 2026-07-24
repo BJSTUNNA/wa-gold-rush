@@ -729,6 +729,11 @@ function updateCompetitionStatus() {
 
 function logoutCompetitionSession() {
     sessionStorage.removeItem(STUDENT_SESSION_KEY);
+    document.getElementById('studentIdInput').value = '';
+    document.getElementById('studentNameInput').value = '';
+    gameState.player.studentId = '';
+    gameState.player.studentName = '';
+    gameState.saveToLocalStorage();
     updateAllUI();
 }
 
