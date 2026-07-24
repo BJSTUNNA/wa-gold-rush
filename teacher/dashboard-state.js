@@ -64,7 +64,7 @@ class TeacherDashboard {
      * Generate unique student ID
      */
     generateStudentId() {
-        return 'STU' + Date.now() + Math.random().toString(36).substr(2, 9);
+        return 'STU' + Date.now() + Math.random().toString(36).slice(2, 11);
     }
 
     /**
@@ -169,23 +169,6 @@ class TeacherDashboard {
         return { success: true, student };
     }
 
-    /**
-     * Update student level assignment
-     */
-    assignLevel(studentId, level) {
-        const student = this.students.find(s => s.id === studentId);
-        if (student) {
-            student.level = level;
-            student.levelAssignedDate = new Date().toISOString();
-            this.saveToLocalStorage();
-            return { success: true, message: `Assigned Level ${level} to ${student.name}` };
-        }
-        return { success: false, error: 'Student not found' };
-    }
-
-    /**
-     * Update student game state (from student's localStorage)
-     */
     updateStudentProgress(studentId, gameStateData) {
         const student = this.students.find(s => s.id === studentId);
         if (student) {
@@ -226,6 +209,15 @@ class TeacherDashboard {
      */
     calculateClassStats() {
         if (this.students.length === 0) {
+            this.classStats = {
+                totalStudents: 0,
+                averageNetWorth: 0,
+                highestNetWorth: 0,
+                wealthiestStudent: null,
+                mostMinesOwned: 0,
+                topMineOwner: null,
+                averageRound: 0
+            };
             return this.classStats;
         }
 
@@ -386,6 +378,15 @@ class TeacherDashboard {
      */
     clearAll() {
         this.students = [];
+        this.classStats = {
+            totalStudents: 0,
+            averageNetWorth: 0,
+            highestNetWorth: 0,
+            wealthiestStudent: null,
+            mostMinesOwned: 0,
+            topMineOwner: null,
+            averageRound: 0
+        };
         localStorage.removeItem('teacher_dashboard');
     }
 }

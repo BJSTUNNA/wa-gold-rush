@@ -12,8 +12,6 @@ const STUDENT_SESSION_KEY = 'wa_gold_rush_student_session';
 const DEFAULT_COMPANY_NAME = 'Untitled Mining Co.';
 const RANDOM_EVENT_MIN_LEVEL = 4;
 const RANDOM_EVENT_ROLL_INTERVAL = 10;
-const MINE_UPGRADE_ORDER = ['silver', 'gold', 'platinum'];
-const MACHINERY_ORDER = ['excavator', 'drilling_rig', 'super_drill'];
 
 let gameState = null;
 let currentMineForInvestment = null;
@@ -42,24 +40,19 @@ function updateAssignedLevelBadge() {
 }
 
 function getAllowedMineUpgradeIds(level = gameState?.assignedLevel || 2) {
-    if (level <= 2) return [];
-    if (level === 3) return MINE_UPGRADE_ORDER.slice(0, 1);
-    if (level === 4) return MINE_UPGRADE_ORDER.slice(0, 2);
-    return [...MINE_UPGRADE_ORDER];
+    return gameState?.getAllowedMineUpgradeIds(level) || [];
 }
 
 function getAllowedMachineryIds(level = gameState?.assignedLevel || 2) {
-    if (level <= 2) return MACHINERY_ORDER.slice(0, 1);
-    if (level === 3) return MACHINERY_ORDER.slice(0, 2);
-    return [...MACHINERY_ORDER];
+    return gameState?.getAllowedMachineryIds(level) || [];
 }
 
 function isMineUpgradeAllowed(upgradeId, level = gameState?.assignedLevel || 2) {
-    return getAllowedMineUpgradeIds(level).includes(upgradeId);
+    return gameState?.isMineUpgradeAllowed(upgradeId, level) || false;
 }
 
 function isMachineryAllowed(machineryId, level = gameState?.assignedLevel || 2) {
-    return getAllowedMachineryIds(level).includes(machineryId);
+    return gameState?.isMachineryAllowed(machineryId, level) || false;
 }
 
 function shouldRollRandomEvent() {
@@ -82,9 +75,6 @@ function resolveConfigPath() {
 document.addEventListener('DOMContentLoaded', async function() {
     gameState = new GameState();
     gameState.assignedLevel = getAssignedLevelFromUrl();
-    gameState.isMineUpgradeAllowed = (upgradeId, level = gameState.assignedLevel) => isMineUpgradeAllowed(upgradeId, level);
-    gameState.isMachineryAllowed = (machineryId, level = gameState.assignedLevel) => isMachineryAllowed(machineryId, level);
-    gameState.canRollRandomEvents = (level = gameState.assignedLevel) => level >= RANDOM_EVENT_MIN_LEVEL;
 
     const configPath = resolveConfigPath();
     if (!configPath) {
@@ -332,9 +322,9 @@ function renderLeaderboard() {
     const profitable = [...records].sort((a, b) => b.averageRoundProfit - a.averageRoundProfit)[0];
 
     document.getElementById('leaderboard-summary').innerHTML = `
-        Wealthiest: ${wealthiest ? `${wealthiest.companyName} ($${wealthiest.netWorth.toFixed(2)})` : 'N/A'}<br>
-        Most mines: ${mostMines ? `${mostMines.companyName} (${mostMines.minesOwned})` : 'N/A'}<br>
-        Most profitable strategy: ${profitable ? `${profitable.companyName} (${profitable.strategyLabel || 'Balanced'})` : 'N/A'}<br>
+        Wealthiest: ${wealthiest ? `${escapeHtml(wealthiest.companyName)} ($${wealthiest.netWorth.toFixed(2)})` : 'N/A'}<br>
+        Most mines: ${mostMines ? `${escapeHtml(mostMines.companyName)} (${mostMines.minesOwned})` : 'N/A'}<br>
+        Most profitable strategy: ${profitable ? `${escapeHtml(profitable.companyName)} (${escapeHtml(profitable.strategyLabel || 'Balanced')})` : 'N/A'}<br>
         Average class wealth: $${avgWealth.toFixed(2)}
     `;
 
@@ -345,10 +335,19 @@ function renderLeaderboard() {
     }
     list.innerHTML = leaderboard.map((record, index) => `
         <div class="leaderboard-item">
-            <span>${index + 1}. ${record.companyName}</span>
+            <span>${index + 1}. ${escapeHtml(record.companyName)}</span>
             <span>$${record.netWorth.toFixed(2)}</span>
         </div>
     `).join('');
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function updateAllUI() {

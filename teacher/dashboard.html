@@ -193,9 +193,9 @@
 
             document.getElementById('classStats').innerHTML = `
                 Total students: <strong>${stats.totalStudents}</strong><br>
-                Wealthiest player: <strong>${stats.wealthiestStudent?.gameState?.companyName || stats.wealthiestStudent?.name || 'N/A'}</strong><br>
+                Wealthiest player: <strong>${escHtml(stats.wealthiestStudent?.gameState?.companyName || stats.wealthiestStudent?.name || 'N/A')}</strong><br>
                 Most mines owned: <strong>${stats.mostMinesOwned}</strong><br>
-                Most profitable strategy: <strong>${topStrategy}</strong><br>
+                Most profitable strategy: <strong>${escHtml(topStrategy)}</strong><br>
                 Average class wealth: <strong>$${(stats.averageNetWorth || 0).toFixed(2)}</strong>
             `;
         }
@@ -210,12 +210,12 @@
             body.innerHTML = records.map((record, index) => `
                 <tr>
                     <td>${index + 1}</td>
-                    <td>${record.studentName || 'Unknown'}</td>
-                    <td>${record.companyName || 'Untitled'}</td>
+                    <td>${escHtml(record.studentName || 'Unknown')}</td>
+                    <td>${escHtml(record.companyName || 'Untitled')}</td>
                     <td>$${Number(record.netWorth || 0).toFixed(2)}</td>
                     <td>${record.minesOwned || 0}</td>
-                    <td>${record.strategyLabel || 'N/A'}</td>
-                    <td>${record.updatedAt ? new Date(record.updatedAt).toLocaleString() : 'N/A'}</td>
+                    <td>${escHtml(record.strategyLabel || 'N/A')}</td>
+                    <td>${escHtml(record.updatedAt ? new Date(record.updatedAt).toLocaleString() : 'N/A')}</td>
                 </tr>
             `).join('');
         }
