@@ -314,7 +314,7 @@ function renderLeaderboard() {
     const competition = getCompetitionContext();
     const lockMessage = document.getElementById('competition-lock-message');
     if (competition.strictModeEnabled && !competition.isLoggedIn) {
-        lockMessage.textContent = 'Login required for competition features in Strict Classroom Mode. You can keep playing and saving in free-play.';
+        lockMessage.textContent = 'Login required for competition features in Strict Classroom Mode. You can continue playing and saving your progress without competition features.';
         lockMessage.classList.remove('hidden');
         document.getElementById('leaderboard-summary').textContent = 'Competition leaderboard is locked until you log in from Home.';
         document.getElementById('leaderboard-list').innerHTML = '<p class="empty-state">Competition login required.</p>';
@@ -731,10 +731,8 @@ function logoutCompetitionSession() {
     sessionStorage.removeItem(STUDENT_SESSION_KEY);
     document.getElementById('studentIdInput').value = '';
     document.getElementById('studentNameInput').value = '';
-    document.getElementById('companyNameInput').value = DEFAULT_COMPANY_NAME;
     gameState.player.studentId = '';
     gameState.player.studentName = '';
-    gameState.player.companyName = DEFAULT_COMPANY_NAME;
     gameState.saveToLocalStorage();
     updateAllUI();
 }

@@ -439,7 +439,7 @@
             const matched = findMatchingStudent(session.studentId, session.studentName);
             if (!matched) {
                 sessionStorage.removeItem(STUDENT_SESSION_KEY);
-                renderCompetitionMessage('Competition Status: Login expired (student removed from roster). Please log in again or contact your teacher.');
+                renderCompetitionMessage('Competition Status: Session invalid. Please log in again or contact your teacher.');
                 return;
             }
 
