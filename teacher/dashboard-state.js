@@ -36,8 +36,11 @@ class TeacherDashboard {
      * Add a new student
      */
     addStudent(studentData) {
+        const autoId = this.generateStudentId();
+        const rawDisplayId = (typeof studentData.displayId === 'string') ? studentData.displayId.trim() : '';
         const student = {
-            id: this.generateStudentId(),
+            id: autoId,
+            displayId: rawDisplayId || autoId,
             name: studentData.name,
             email: studentData.email || '',
             level: studentData.level || 1,
@@ -149,6 +152,11 @@ class TeacherDashboard {
             return { success: false, error: 'Student not found' };
         }
 
+        if (typeof updates.displayId === 'string') {
+            const nextDisplayId = updates.displayId.trim();
+            if (nextDisplayId) student.displayId = nextDisplayId;
+        }
+
         if (typeof updates.name === 'string') {
             const nextName = updates.name.trim();
             if (!nextName) return { success: false, error: 'Name cannot be empty' };
@@ -256,32 +264,15 @@ class TeacherDashboard {
      * Upsert student progress from shared class gameplay record
      */
     syncFromPlayerRecord(record) {
-        const studentId = record.studentId || record.playerKey;
-        let student = this.students.find(s => s.id === studentId);
+        const incomingDisplayId = String(record.studentId || '').trim();
+        if (!incomingDisplayId) return null;
+
+        let student = this.students.find(s =>
+            String(s.displayId || s.id || '').trim().toLowerCase() === incomingDisplayId.toLowerCase()
+        );
 
         if (!student) {
-            student = {
-                id: studentId,
-                name: record.studentName || 'Unknown Student',
-                email: '',
-                level: 2,
-                assignedDate: new Date().toISOString(),
-                gameState: {
-                    round: 1,
-                    cash: 200,
-                    netWorth: 300,
-                    ownedMines: 1,
-                    machinery: 0,
-                    totalProfitLoss: 0,
-                    averageRoundProfit: 0,
-                    strategyLabel: '',
-                    companyName: '',
-                    lastPlayed: null
-                },
-                createdAt: new Date().toISOString(),
-                notes: ''
-            };
-            this.students.push(student);
+            return null;
         }
 
         student.name = record.studentName || student.name;

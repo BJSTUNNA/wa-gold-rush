@@ -117,12 +117,10 @@ class GameState {
         if (!this.gameConfig?.mines?.[mineId]) {
             return false;
         }
-        if (mineId === 'leonora') {
-            return !!this.ownedMines.kalgoorlie?.owned;
-        }
-        if (mineId === 'laverton') {
-            return !!this.ownedMines.leonora?.owned;
-        }
+        const level = this.assignedLevel || 2;
+        if (mineId === 'kalgoorlie' && level < 3) return false;
+        if (mineId === 'leonora') return level >= 4 && !!this.ownedMines.kalgoorlie?.owned;
+        if (mineId === 'laverton') return level >= 4 && !!this.ownedMines.leonora?.owned;
         return true;
     }
 
