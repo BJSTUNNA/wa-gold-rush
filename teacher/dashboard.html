@@ -238,6 +238,8 @@
 
         document.getElementById('importFormat').addEventListener('change', function () {
             const textarea = document.getElementById('bulkInput');
+            // Note: \n in JS string literals creates a real newline character, which is
+            // what textarea.placeholder needs. HTML entity &#10; is for HTML attributes only.
             if (this.value === 'json') {
                 textarea.placeholder = '[{"name":"Alex","email":"alex@school.edu","level":2},{"name":"Jordan","email":"","level":3}]';
             } else {

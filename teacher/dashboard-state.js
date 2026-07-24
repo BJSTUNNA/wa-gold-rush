@@ -116,14 +116,13 @@ class TeacherDashboard {
         const skipped = [];
 
         rawStudents.forEach(studentData => {
-            const rowLabel = studentData._row ? `Row ${studentData._row}` : 'Row ?';
             if (studentData._skipReason) {
                 skipped.push({ row: studentData._row || '?', reason: studentData._skipReason });
                 return;
             }
             // Bug 4 / Bug 7: skip records with no name after normalisation
             if (!studentData.name) {
-                skipped.push({ row: studentData._row || '?', reason: `${rowLabel}: Missing name` });
+                skipped.push({ row: studentData._row || '?', reason: 'Missing name' });
                 return;
             }
             added.push(this.addStudent(studentData));
