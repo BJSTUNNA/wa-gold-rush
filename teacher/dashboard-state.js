@@ -102,7 +102,7 @@ class TeacherDashboard {
             const parsed = JSON.parse(data);
             // Bug 3: validate the parsed result is an array
             if (!Array.isArray(parsed)) {
-                throw new Error('JSON must be an array of student objects, e.g. [{"name":"Alex","email":"","level":2}]');
+                throw new TypeError('JSON must be an array of student objects, e.g. [{"name":"Alex","email":"","level":2}]');
             }
             // Bug 4: normalise common field-name variants; use ?? to avoid truthy-string short-circuit
             rawStudents = parsed.map((item, idx) => ({
