@@ -81,13 +81,17 @@ class TeacherDashboard {
             // Bug 1: detect header row by checking if the first line's third field
             // is a valid level integer (1–5). If not, treat it as a header and skip it.
             const firstFields = lines[0].split(',').map(s => s.trim());
-            const firstLevelVal = parseInt(firstFields[2], 10);
+            const firstLevelVal = firstFields.length >= 3 ? parseInt(firstFields[2], 10) : NaN;
             const firstLineIsHeader = isNaN(firstLevelVal) || firstLevelVal < 1 || firstLevelVal > 5;
 
             rawStudents = (firstLineIsHeader ? lines.slice(1) : lines)
                 .filter(line => line.trim() !== '')  // Bug 2: drop blank/whitespace-only lines
-                .map(line => {
-                    const [name, email, level] = line.split(',').map(s => s.trim());
+                .map((line, idx) => {
+                    const fields = line.split(',').map(s => s.trim());
+                    if (fields.length < 3) {
+                        return { _skipReason: `Row ${idx + 1}: fewer than 3 fields` };
+                    }
+                    const [name, email, level] = fields;
                     return { name, email, level: parseInt(level, 10) || 1 };
                 });
         } else if (format === 'json') {
@@ -100,7 +104,7 @@ class TeacherDashboard {
             rawStudents = parsed.map(item => ({
                 name: item.name || item.Name || item.studentName || item.student_name || '',
                 email: item.email || item.Email || '',
-                level: parseInt(item.level || item.Level || item.assignedLevel || 1, 10)
+                level: parseInt(item.level || item.Level || item.assignedLevel, 10) || 1
             }));
         }
 
@@ -108,6 +112,10 @@ class TeacherDashboard {
         const skipped = [];
 
         rawStudents.forEach((studentData, index) => {
+            if (studentData._skipReason) {
+                skipped.push({ row: index + 1, reason: studentData._skipReason });
+                return;
+            }
             // Bug 4 / Bug 7: skip records with no name after normalisation
             if (!studentData.name) {
                 skipped.push({ row: index + 1, reason: 'Missing name' });
