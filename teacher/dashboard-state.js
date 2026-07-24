@@ -85,11 +85,12 @@ class TeacherDashboard {
             const firstLineIsHeader = isNaN(firstLevelVal) || firstLevelVal < 1 || firstLevelVal > 5;
             const dataLines = firstLineIsHeader ? lines.slice(1) : lines;
 
-            // Preserve original 1-based line numbers (relative to data lines, after header skip)
+            const headerOffset = firstLineIsHeader ? 1 : 0;
+
+            // Preserve original 1-based line numbers in the original pasted input (including header, if present)
             dataLines.forEach((line, idx) => {
-                const originalRow = idx + 1;
+                const originalRow = idx + 1 + headerOffset;
                 if (line.trim() === '') return;  // Bug 2: skip blank/whitespace-only lines
-                const fields = line.split(',').map(s => s.trim());
                 if (fields.length < 3) {
                     rawStudents.push({ _row: originalRow, _skipReason: `fewer than 3 fields` });
                     return;
