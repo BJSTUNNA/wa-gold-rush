@@ -15,9 +15,13 @@
         .btn-secondary { background: #2e7d32; color: #fff; }
         .btn-danger { background: #c62828; color: #fff; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 8px; border-bottom: 1px solid #ececec; text-align: left; }
+        th, td { padding: 8px; border-bottom: 1px solid #ececec; text-align: left; vertical-align: middle; }
         .row-actions { display: grid; gap: 8px; grid-template-columns: 1fr 1fr 1fr; }
         .muted { color: #666; font-size: 12px; }
+        .inline-actions { display: flex; gap: 6px; align-items: center; }
+        .inline-actions button { width: auto; padding: 6px 10px; }
+        .edit-input { width: 100%; margin: 0; padding: 6px; }
+        .edit-select { width: 100%; margin: 0; padding: 6px; }
     </style>
 </head>
 <body>
@@ -81,6 +85,7 @@
                         <th>Net Worth</th>
                         <th>Round</th>
                         <th>Last Played</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="rosterBody"></tbody>
@@ -200,19 +205,40 @@
             const body = document.getElementById('rosterBody');
             const students = dashboard.getAllStudents();
             if (!students.length) {
-                body.innerHTML = '<tr><td colspan="6">No students added yet.</td></tr>';
+                body.innerHTML = '<tr><td colspan="7">No students added yet.</td></tr>';
                 return;
             }
-            body.innerHTML = students.map(s => `
+
+            body.innerHTML = students.map(s => {
+                const id = escHtml(s.id);
+                const name = escHtml(s.name || '');
+                const email = escHtml(s.email || '');
+                const level = Number(s.level) || 1;
+                return `
                 <tr>
-                    <td>${escHtml(s.name)}</td>
-                    <td>${escHtml(s.email || '—')}</td>
-                    <td>${escHtml(s.level)}</td>
-                    <td>$${Number(s.gameState.netWorth || 0).toFixed(2)}</td>
-                    <td>${Number(s.gameState.round) || 1}</td>
-                    <td>${escHtml(s.gameState.lastPlayed ? new Date(s.gameState.lastPlayed).toLocaleString() : 'Never')}</td>
+                    <td><input class="edit-input" data-field="name" data-id="${id}" value="${name}" aria-label="Name for ${name || 'student'}"></td>
+                    <td><input class="edit-input" data-field="email" data-id="${id}" value="${email}" aria-label="Email for ${name || 'student'}"></td>
+                    <td>
+                        <select class="edit-select" data-field="level" data-id="${id}" aria-label="Assigned level for ${name || 'student'}">
+                            <option value="1" ${level === 1 ? 'selected' : ''}>Level 1</option>
+                            <option value="2" ${level === 2 ? 'selected' : ''}>Level 2</option>
+                            <option value="3" ${level === 3 ? 'selected' : ''}>Level 3</option>
+                            <option value="4" ${level === 4 ? 'selected' : ''}>Level 4</option>
+                            <option value="5" ${level === 5 ? 'selected' : ''}>Level 5</option>
+                        </select>
+                    </td>
+                    <td>$${Number(s.gameState?.netWorth || 0).toFixed(2)}</td>
+                    <td>${Number(s.gameState?.round) || 1}</td>
+                    <td>${escHtml(s.gameState?.lastPlayed ? new Date(s.gameState.lastPlayed).toLocaleString() : 'Never')}</td>
+                    <td>
+                        <div class="inline-actions">
+                            <button class="btn-secondary" data-action="save" data-id="${id}">Save</button>
+                            <button class="btn-danger" data-action="delete" data-id="${id}">Delete</button>
+                        </div>
+                    </td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
         }
 
         function refresh() {
@@ -221,6 +247,50 @@
             renderRoster();
             renderLeaderboard();
         }
+
+        function saveRosterRow(studentId) {
+            const nameInput = document.querySelector(`input[data-field="name"][data-id="${CSS.escape(studentId)}"]`);
+            const emailInput = document.querySelector(`input[data-field="email"][data-id="${CSS.escape(studentId)}"]`);
+            const levelInput = document.querySelector(`select[data-field="level"][data-id="${CSS.escape(studentId)}"]`);
+            const name = (nameInput?.value || '').trim();
+            const email = (emailInput?.value || '').trim();
+            const level = parseInt(levelInput?.value || '1', 10);
+
+            if (!name) {
+                alert('Name cannot be empty.');
+                return;
+            }
+
+            const result = dashboard.updateStudent(studentId, { name, email, level });
+            if (!result.success) {
+                alert(`Save failed: ${result.error || 'Unknown error'}`);
+                return;
+            }
+            refresh();
+        }
+
+        function deleteRosterRow(studentId) {
+            const student = dashboard.getStudent(studentId);
+            const displayName = student?.name || 'this student';
+            if (!confirm(`Delete ${displayName}? This cannot be undone.`)) return;
+            const result = dashboard.deleteStudent(studentId);
+            if (!result.success) {
+                alert(`Delete failed: ${result.error || 'Unknown error'}`);
+                return;
+            }
+            refresh();
+        }
+
+        document.getElementById('rosterBody').addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            const action = target.getAttribute('data-action');
+            const studentId = target.getAttribute('data-id');
+            if (!action || !studentId) return;
+
+            if (action === 'save') saveRosterRow(studentId);
+            if (action === 'delete') deleteRosterRow(studentId);
+        });
 
         document.getElementById('addStudentBtn').addEventListener('click', () => {
             const name = document.getElementById('studentName').value.trim();
@@ -233,13 +303,14 @@
                 email: document.getElementById('studentEmail').value.trim(),
                 level: parseInt(document.getElementById('studentLevel').value, 10)
             });
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentEmail').value = '';
+            document.getElementById('studentLevel').value = '2';
             refresh();
         });
 
         document.getElementById('importFormat').addEventListener('change', function () {
             const textarea = document.getElementById('bulkInput');
-            // Note: \n in JS string literals creates a real newline character, which is
-            // what textarea.placeholder needs. HTML entity &#10; is for HTML attributes only.
             if (this.value === 'json') {
                 textarea.placeholder = '[{"name":"Alex","email":"alex@school.edu","level":2},{"name":"Jordan","email":"","level":3}]';
             } else {
