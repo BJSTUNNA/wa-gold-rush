@@ -6,218 +6,504 @@
     <title>Goldfields Goldrush W.A. - Teacher Dashboard</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; background: #f5f5f5; color: #222; }
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .card { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-        .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+        .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
         input, textarea, select, button { width: 100%; padding: 8px; box-sizing: border-box; margin-top: 4px; }
         button { cursor: pointer; border: 0; border-radius: 6px; font-weight: bold; }
-        .btn { background: #f4b400; color: #fff; }
+        .btn         { background: #f4b400; color: #fff; }
         .btn-secondary { background: #2e7d32; color: #fff; }
-        .btn-danger { background: #c62828; color: #fff; }
+        .btn-danger  { background: #c62828; color: #fff; }
+        .btn-info    { background: #0277bd; color: #fff; }
+        .btn-sm      { padding: 4px 10px; font-size: 12px; width: auto; margin-top: 0; }
+        .btn-sm + .btn-sm { margin-left: 4px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 8px; border-bottom: 1px solid #ececec; text-align: left; }
-        .row-actions { display: grid; gap: 8px; grid-template-columns: 1fr 1fr 1fr; }
+        th, td { padding: 8px; border-bottom: 1px solid #ececec; text-align: left; vertical-align: top; }
+        th { background: #f9f9f9; }
+        .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .muted { color: #666; font-size: 12px; }
+        .tab-bar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .tab-bar button { width: auto; padding: 6px 14px; background: #eee; color: #333; }
+        .tab-bar button.active { background: #f4b400; color: #fff; }
+        .hidden { display: none !important; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+        .badge-l1 { background: #e3f2fd; color: #0277bd; }
+        .badge-l2 { background: #e8f5e9; color: #2e7d32; }
+        .alert-box { padding: 10px 14px; border-radius: 6px; margin-top: 8px; font-size: 13px; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; }
+        .alert-error   { background: #ffebee; color: #c62828; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 100; }
+        .modal-overlay.open { display: flex; align-items: center; justify-content: center; }
+        .modal-box { background: #fff; border-radius: 10px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,.2); }
+        .modal-box h3 { margin-top: 0; }
+        .modal-box .grid { grid-template-columns: 1fr; }
+        #credentialsTable td { font-family: monospace; }
+        .copy-cell { cursor: pointer; user-select: all; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>👨‍🏫 Goldfields Goldrush W.A. Teacher Dashboard</h1>
-        <p><a href="../index.html">← Back to Home</a></p>
+<div class="container">
+    <h1>👨‍🏫 Goldfields Goldrush W.A. — Teacher Dashboard</h1>
+    <p><a href="../index.html">← Back to Home</a></p>
 
-        <section class="card">
-            <h2>Class Controls</h2>
-            <div class="row-actions">
-                <button id="pauseClassBtn" class="btn-danger">Pause Class Gameplay</button>
-                <button id="resumeClassBtn" class="btn-secondary">Resume Class Gameplay</button>
-                <button id="refreshBtn" class="btn">Refresh Stats</button>
+    <!-- ── Class Controls ─────────────────────────────────── -->
+    <section class="card">
+        <h2>Class Controls</h2>
+        <div class="row-actions">
+            <button id="pauseClassBtn"  class="btn-danger"    style="width:auto;padding:8px 16px;">⏸ Pause Gameplay</button>
+            <button id="resumeClassBtn" class="btn-secondary" style="width:auto;padding:8px 16px;">▶ Resume Gameplay</button>
+            <button id="refreshBtn"     class="btn"           style="width:auto;padding:8px 16px;">🔄 Refresh Stats</button>
+        </div>
+        <p id="pauseStatus" class="muted"></p>
+    </section>
+
+    <!-- ── Add Student ────────────────────────────────────── -->
+    <section class="card">
+        <h2>Add Student</h2>
+        <div class="grid">
+            <label>Name <input id="studentName" type="text" placeholder="Student name"></label>
+            <label>Email (optional) <input id="studentEmail" type="email" placeholder="student@example.com"></label>
+            <label>Assigned Level
+                <select id="studentLevel">
+                    <option value="1">Level 1</option>
+                    <option value="2" selected>Level 2</option>
+                    <option value="3">Level 3</option>
+                    <option value="4">Level 4</option>
+                    <option value="5">Level 5</option>
+                </select>
+            </label>
+        </div>
+        <p style="margin-top:10px;"><button id="addStudentBtn" class="btn" style="width:auto;padding:8px 20px;">+ Add Student</button></p>
+    </section>
+
+    <!-- ── Student Management Table ──────────────────────── -->
+    <section class="card">
+        <h2>Student Roster</h2>
+        <div style="overflow-x:auto;">
+            <table id="studentTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>PIN</th>
+                        <th>Level</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody"></tbody>
+            </table>
+        </div>
+        <p style="margin-top:10px;">
+            <button id="exportLoginsBtn" class="btn-info btn-sm" style="width:auto;padding:6px 14px;">📋 Export All Logins CSV</button>
+            <button id="viewLoginsBtn"   class="btn-info btn-sm" style="width:auto;padding:6px 14px;margin-left:8px;">👁 View All Login Credentials</button>
+        </p>
+    </section>
+
+    <!-- ── Login Credentials Panel ───────────────────────── -->
+    <section class="card hidden" id="credentialsPanel">
+        <h2>All Student Login Credentials</h2>
+        <p class="muted">Share each student's username + PIN with them individually. Do not display this on a projector.</p>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>#</th><th>Name</th><th>Username</th><th>PIN</th><th>Level</th></tr></thead>
+                <tbody id="credentialsTable"></tbody>
+            </table>
+        </div>
+        <p style="margin-top:10px;">
+            <button id="copyAllCredentialsBtn" class="btn-info btn-sm" style="width:auto;padding:6px 14px;">📋 Copy to Clipboard</button>
+            <button id="hideCredentialsBtn"    class="btn-danger btn-sm" style="width:auto;padding:6px 14px;margin-left:8px;">✕ Hide</button>
+        </p>
+    </section>
+
+    <!-- ── Bulk Import ────────────────────────────────────── -->
+    <section class="card">
+        <h2>Bulk Import</h2>
+        <div class="grid">
+            <label>Format
+                <select id="importFormat">
+                    <option value="csv">CSV (name,email,level)</option>
+                    <option value="json">JSON</option>
+                </select>
+            </label>
+            <div>
+                <div class="muted">Paste data below then click Import</div>
+                <button id="importBtn" class="btn" style="width:auto;padding:8px 20px;margin-top:8px;">Import Students</button>
             </div>
-            <p id="pauseStatus" class="muted"></p>
-        </section>
+        </div>
+        <textarea id="bulkInput" rows="5" placeholder="name,email,level&#10;Alex,alex@school.edu,2&#10;Sam,,1"></textarea>
+        <div id="importResult" class="muted" style="margin-top:6px;"></div>
+    </section>
 
-        <section class="card">
-            <h2>Student Management</h2>
-            <div class="grid">
-                <label>Name <input id="studentName" type="text" placeholder="Student name"></label>
-                <label>Email (optional) <input id="studentEmail" type="email" placeholder="student@example.com"></label>
-                <label>Assigned Level
-                    <select id="studentLevel">
-                        <option value="1">Level 1</option>
-                        <option value="2" selected>Level 2</option>
-                        <option value="3">Level 3</option>
-                        <option value="4">Level 4</option>
-                        <option value="5">Level 5</option>
-                    </select>
-                </label>
-            </div>
-            <p><button id="addStudentBtn" class="btn">Add Student</button></p>
-        </section>
+    <!-- ── Class Statistics ───────────────────────────────── -->
+    <section class="card">
+        <h2>Class Statistics</h2>
+        <div id="classStats" class="muted">No data yet.</div>
+    </section>
 
-        <section class="card">
-            <h2>Bulk Import</h2>
-            <div class="grid">
-                <label>Format
-                    <select id="importFormat">
-                        <option value="csv">CSV (name,email,level)</option>
-                        <option value="json">JSON</option>
-                    </select>
-                </label>
-                <div>
-                    <div class="muted">Import</div>
-                    <button id="importBtn" class="btn">Import Students</button>
-                </div>
-            </div>
-            <textarea id="bulkInput" rows="6" placeholder="name,email,level&#10;Alex,alex@school.edu,2"></textarea>
-        </section>
-
-        <section class="card">
-            <h2>Class Statistics</h2>
-            <div id="classStats" class="muted">No data yet.</div>
-        </section>
-
-        <section class="card">
-            <h2>Classroom Leaderboard</h2>
+    <!-- ── Leaderboard ────────────────────────────────────── -->
+    <section class="card">
+        <h2>Classroom Leaderboard</h2>
+        <div class="tab-bar">
+            <button class="active" data-filter="all">All Levels</button>
+            <button data-filter="level1">Level 1 – Basic Mining</button>
+            <button data-filter="level2plus">Goldfields Venture</button>
+        </div>
+        <div style="overflow-x:auto;">
             <table>
                 <thead>
                     <tr>
                         <th>Rank</th>
                         <th>Student</th>
                         <th>Company</th>
-                        <th>Net Worth</th>
+                        <th>Score / Net Worth</th>
+                        <th>Level / Mode</th>
+                        <th>Rounds</th>
                         <th>Mines</th>
-                        <th>Strategy</th>
-                        <th>Last Played</th>
+                        <th>Last Updated</th>
                     </tr>
                 </thead>
                 <tbody id="leaderboardBody"></tbody>
             </table>
-        </section>
+        </div>
+    </section>
+</div>
+
+<!-- ── Edit Student Modal ──────────────────────────────── -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+        <h3>✏️ Edit Student</h3>
+        <input type="hidden" id="editStudentId">
+        <div class="grid">
+            <label>Name <input id="editName"  type="text"></label>
+            <label>Email <input id="editEmail" type="email"></label>
+            <label>Level
+                <select id="editLevel">
+                    <option value="1">Level 1</option>
+                    <option value="2">Level 2</option>
+                    <option value="3">Level 3</option>
+                    <option value="4">Level 4</option>
+                    <option value="5">Level 5</option>
+                </select>
+            </label>
+            <label>Status
+                <select id="editStatus">
+                    <option value="active">Active</option>
+                    <option value="archived">Archived</option>
+                </select>
+            </label>
+            <label>Notes <input id="editNotes" type="text"></label>
+        </div>
+        <div class="row-actions" style="margin-top:14px;">
+            <button id="saveEditBtn"   class="btn"         style="width:auto;padding:8px 20px;">💾 Save</button>
+            <button id="cancelEditBtn" class="btn-danger"  style="width:auto;padding:8px 20px;">Cancel</button>
+        </div>
     </div>
+</div>
 
-    <script src="dashboard-state.js"></script>
-    <script>
-        const CLASS_RECORDS_KEY = 'wa_gold_rush_class_records';
-        const PAUSE_STATE_KEY = 'wa_gold_rush_pause_state';
-        const dashboard = new TeacherDashboard();
-        dashboard.loadFromLocalStorage();
+<script src="../shared/leaderboard-store.js"></script>
+<script src="dashboard-state.js"></script>
+<script>
+    const PAUSE_STATE_KEY = 'wa_gold_rush_pause_state';
+    const dashboard = new TeacherDashboard();
+    dashboard.loadFromLocalStorage();
 
-        function getRecords() {
-            try {
-                const raw = localStorage.getItem(CLASS_RECORDS_KEY);
-                if (!raw) return [];
-                const records = JSON.parse(raw);
-                return Array.isArray(records) ? records : [];
-            } catch (error) {
-                console.error('Failed to load class records:', error);
-                return [];
-            }
-        }
+    // ── Leaderboard filter state ──────────────────────────────────────────────
+    let currentLeaderboardFilter = 'all';
 
-        function syncFromRecords() {
-            getRecords().forEach(record => dashboard.syncFromPlayerRecord(record));
-            dashboard.saveToLocalStorage();
-        }
+    // ── Render helpers ────────────────────────────────────────────────────────
 
-        function renderPauseStatus() {
-            let paused = false;
-            try {
-                paused = !!JSON.parse(localStorage.getItem(PAUSE_STATE_KEY))?.paused;
-            } catch (error) {
-                console.error('Failed to load pause state:', error);
-            }
-            document.getElementById('pauseStatus').textContent = paused
-                ? 'Gameplay is currently paused.'
-                : 'Gameplay is active.';
-        }
+    function renderPauseStatus() {
+        let paused = false;
+        try { paused = !!JSON.parse(localStorage.getItem(PAUSE_STATE_KEY))?.paused; } catch (e) {}
+        document.getElementById('pauseStatus').textContent = paused
+            ? '⏸ Gameplay is currently paused.'
+            : '▶ Gameplay is active.';
+    }
 
-        function renderStats() {
-            syncFromRecords();
-            const stats = dashboard.calculateClassStats();
-            const records = getRecords();
-            const byStrategy = {};
-            records.forEach(r => {
-                const key = r.strategyLabel || 'Unknown';
-                byStrategy[key] = (byStrategy[key] || 0) + 1;
-            });
-            const topStrategy = Object.entries(byStrategy).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
-
-            document.getElementById('classStats').innerHTML = `
-                Total students: <strong>${stats.totalStudents}</strong><br>
-                Wealthiest player: <strong>${stats.wealthiestStudent?.gameState?.companyName || stats.wealthiestStudent?.name || 'N/A'}</strong><br>
-                Most mines owned: <strong>${stats.mostMinesOwned}</strong><br>
-                Most profitable strategy: <strong>${topStrategy}</strong><br>
-                Average class wealth: <strong>$${(stats.averageNetWorth || 0).toFixed(2)}</strong>
-            `;
-        }
-
-        function renderLeaderboard() {
-            const body = document.getElementById('leaderboardBody');
-            const records = getRecords().sort((a, b) => b.netWorth - a.netWorth);
-            if (!records.length) {
-                body.innerHTML = '<tr><td colspan="7">No gameplay records yet.</td></tr>';
-                return;
-            }
-            body.innerHTML = records.map((record, index) => `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${record.studentName || 'Unknown'}</td>
-                    <td>${record.companyName || 'Untitled'}</td>
-                    <td>$${Number(record.netWorth || 0).toFixed(2)}</td>
-                    <td>${record.minesOwned || 0}</td>
-                    <td>${record.strategyLabel || 'N/A'}</td>
-                    <td>${record.updatedAt ? new Date(record.updatedAt).toLocaleString() : 'N/A'}</td>
-                </tr>
-            `).join('');
-        }
-
-        function refresh() {
-            renderPauseStatus();
-            renderStats();
-            renderLeaderboard();
-        }
-
-        document.getElementById('addStudentBtn').addEventListener('click', () => {
-            const name = document.getElementById('studentName').value.trim();
-            if (!name) {
-                alert('Student name is required.');
-                return;
-            }
-            dashboard.addStudent({
-                name,
-                email: document.getElementById('studentEmail').value.trim(),
-                level: parseInt(document.getElementById('studentLevel').value, 10)
-            });
-            refresh();
+    function renderStats() {
+        const stats = dashboard.calculateClassStats();
+        const entries = LeaderboardStore.queryEntries();
+        const byStrategy = {};
+        entries.forEach(e => {
+            const key = e.strategyLabel || 'Unknown';
+            byStrategy[key] = (byStrategy[key] || 0) + 1;
         });
+        const topStrategy = Object.entries(byStrategy).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
 
-        document.getElementById('importBtn').addEventListener('click', () => {
-            const data = document.getElementById('bulkInput').value.trim();
-            if (!data) {
-                alert('Paste CSV or JSON data first.');
-                return;
-            }
-            const format = document.getElementById('importFormat').value;
-            try {
-                const imported = dashboard.bulkImportStudents(data, format);
-                alert(`Imported ${imported.length} students.`);
-                refresh();
-            } catch (error) {
-                alert(`Import failed: ${error.message}`);
-            }
+        const wealthiest = stats.wealthiestStudent;
+        const wealthiestLabel = wealthiest?.gameState?.companyName || wealthiest?.name || 'N/A';
+
+        document.getElementById('classStats').innerHTML = `
+            Total students: <strong>${stats.totalStudents}</strong><br>
+            Wealthiest player: <strong>${_esc(wealthiestLabel)}</strong><br>
+            Most mines owned: <strong>${stats.mostMinesOwned}</strong><br>
+            Most profitable strategy: <strong>${_esc(topStrategy)}</strong><br>
+            Average class wealth: <strong>$${(stats.averageNetWorth || 0).toFixed(2)}</strong>
+        `;
+    }
+
+    function renderStudentTable() {
+        const body = document.getElementById('studentTableBody');
+        const students = dashboard.getAllStudents();
+        if (!students.length) {
+            body.innerHTML = '<tr><td colspan="7" class="muted">No students yet. Add one above.</td></tr>';
+            return;
+        }
+        body.innerHTML = students.map(s => `
+            <tr>
+                <td>${_esc(s.name)}</td>
+                <td><code>${_esc(s.username)}</code></td>
+                <td><code>${_esc(s.pin)}</code></td>
+                <td>L${s.level}</td>
+                <td>${s.status === 'archived' ? '<span class="muted">archived</span>' : 'active'}</td>
+                <td class="muted">${s.lastLoginAt ? new Date(s.lastLoginAt).toLocaleString() : '—'}</td>
+                <td>
+                    <button class="btn-info btn-sm student-edit-btn"    data-id="${_esc(s.id)}">✏️ Edit</button>
+                    <button class="btn btn-sm student-reset-btn"        data-id="${_esc(s.id)}">🔑 Reset</button>
+                    <button class="btn-danger btn-sm student-delete-btn" data-id="${_esc(s.id)}">🗑 Delete</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function renderCredentials() {
+        const logins = dashboard.getAllStudentLogins();
+        const body = document.getElementById('credentialsTable');
+        if (!logins.length) {
+            body.innerHTML = '<tr><td colspan="5" class="muted">No students.</td></tr>';
+            return;
+        }
+        body.innerHTML = logins.map((l, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>${_esc(l.name)}</td>
+                <td class="copy-cell">${_esc(l.username)}</td>
+                <td class="copy-cell">${_esc(l.pin)}</td>
+                <td>L${l.level}</td>
+            </tr>
+        `).join('');
+    }
+
+    function renderLeaderboard(filterKey) {
+        const body = document.getElementById('leaderboardBody');
+        let filter = {};
+        if (filterKey === 'level1')    filter = { source: 'level1' };
+        if (filterKey === 'level2plus') filter = { source: 'level2' };
+
+        const records = LeaderboardStore.queryEntries(Object.keys(filter).length ? filter : undefined);
+
+        if (!records.length) {
+            body.innerHTML = `<tr><td colspan="8" class="muted">No ${filterKey === 'all' ? '' : filterKey + ' '}records yet.</td></tr>`;
+            return;
+        }
+        body.innerHTML = records.map((r, idx) => {
+            const badge = r.source === 'level1'
+                ? '<span class="badge badge-l1">Level 1</span>'
+                : '<span class="badge badge-l2">Goldfields</span>';
+            return `
+            <tr>
+                <td>${idx + 1}</td>
+                <td>${_esc(r.studentName)}</td>
+                <td>${_esc(r.companyName || '—')}</td>
+                <td>$${Number(r.score || r.netWorth || 0).toFixed(2)}</td>
+                <td>${badge}</td>
+                <td>${r.roundsPlayed || '—'}</td>
+                <td>${r.minesOwned || '—'}</td>
+                <td class="muted">${r.timestamp ? new Date(r.timestamp).toLocaleString() : '—'}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    function refresh() {
+        // Sync any Level 2 records that were written to class records store
+        const entries = LeaderboardStore.queryEntries();
+        entries.forEach(e => dashboard.syncFromPlayerRecord(e));
+
+        renderPauseStatus();
+        renderStats();
+        renderStudentTable();
+        renderLeaderboard(currentLeaderboardFilter);
+    }
+
+    // ── Escape helpers ────────────────────────────────────────────────────────
+    function _esc(str) {
+        return String(str || '')
+            .replace(/&/g,'&amp;')
+            .replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;');
+    }
+
+    /** Wrap a value in CSV-safe double quotes, escaping internal quotes. */
+    function _csvEsc(v) {
+        return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    }
+
+    // ── Student actions ───────────────────────────────────────────────────────
+
+    document.getElementById('addStudentBtn').addEventListener('click', () => {
+        const name = document.getElementById('studentName').value.trim();
+        if (!name) { alert('Student name is required.'); return; }
+        dashboard.addStudent({
+            name,
+            email: document.getElementById('studentEmail').value.trim(),
+            level: parseInt(document.getElementById('studentLevel').value, 10)
         });
-
-        document.getElementById('pauseClassBtn').addEventListener('click', () => {
-            localStorage.setItem(PAUSE_STATE_KEY, JSON.stringify({ paused: true }));
-            refresh();
-        });
-
-        document.getElementById('resumeClassBtn').addEventListener('click', () => {
-            localStorage.setItem(PAUSE_STATE_KEY, JSON.stringify({ paused: false }));
-            refresh();
-        });
-
-        document.getElementById('refreshBtn').addEventListener('click', refresh);
+        document.getElementById('studentName').value  = '';
+        document.getElementById('studentEmail').value = '';
         refresh();
-    </script>
+    });
+
+    // Event delegation for student table action buttons (avoids inline onclick XSS risk)
+    document.getElementById('studentTableBody').addEventListener('click', function(e) {
+        const btn = e.target.closest('button[data-id]');
+        if (!btn) return;
+        const studentId = btn.dataset.id;
+        if (btn.classList.contains('student-edit-btn'))   openEditModal(studentId);
+        if (btn.classList.contains('student-reset-btn'))  doResetLogin(studentId);
+        if (btn.classList.contains('student-delete-btn')) doDeleteStudent(studentId);
+    });
+
+    function doDeleteStudent(studentId) {
+        const s = dashboard.getStudent(studentId);
+        if (!s) return;
+        if (!confirm(`Delete student "${s.name}"? This cannot be undone.`)) return;
+        const result = dashboard.deleteStudent(studentId);
+        if (!result.success) { alert(result.error); return; }
+        refresh();
+    }
+
+    function doResetLogin(studentId) {
+        const s = dashboard.getStudent(studentId);
+        if (!s) return;
+        if (!confirm(`Reset login credentials for "${s.name}"? This will generate a new username and PIN.`)) return;
+        const result = dashboard.resetStudentLogin(studentId);
+        if (!result.success) { alert(result.error); return; }
+        alert(`New credentials for ${s.name}:\nUsername: ${result.username}\nPIN: ${result.pin}`);
+        refresh();
+    }
+
+    // ── Edit modal ────────────────────────────────────────────────────────────
+
+    function openEditModal(studentId) {
+        const s = dashboard.getStudent(studentId);
+        if (!s) return;
+        document.getElementById('editStudentId').value = s.id;
+        document.getElementById('editName').value      = s.name;
+        document.getElementById('editEmail').value     = s.email || '';
+        document.getElementById('editLevel').value     = s.level;
+        document.getElementById('editStatus').value    = s.status || 'active';
+        document.getElementById('editNotes').value     = s.notes  || '';
+        document.getElementById('editModal').classList.add('open');
+    }
+
+    document.getElementById('saveEditBtn').addEventListener('click', () => {
+        const id = document.getElementById('editStudentId').value;
+        const result = dashboard.updateStudent(id, {
+            name:   document.getElementById('editName').value.trim(),
+            email:  document.getElementById('editEmail').value.trim(),
+            level:  parseInt(document.getElementById('editLevel').value, 10),
+            status: document.getElementById('editStatus').value,
+            notes:  document.getElementById('editNotes').value.trim()
+        });
+        if (!result.success) { alert(result.error); return; }
+        document.getElementById('editModal').classList.remove('open');
+        refresh();
+    });
+
+    document.getElementById('cancelEditBtn').addEventListener('click', () => {
+        document.getElementById('editModal').classList.remove('open');
+    });
+
+    // close modal on overlay click
+    document.getElementById('editModal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+    });
+
+    // ── Credentials panel ─────────────────────────────────────────────────────
+
+    document.getElementById('viewLoginsBtn').addEventListener('click', () => {
+        renderCredentials();
+        document.getElementById('credentialsPanel').classList.remove('hidden');
+    });
+
+    document.getElementById('hideCredentialsBtn').addEventListener('click', () => {
+        document.getElementById('credentialsPanel').classList.add('hidden');
+    });
+
+    document.getElementById('copyAllCredentialsBtn').addEventListener('click', () => {
+        const logins = dashboard.getAllStudentLogins();
+        const text = ['Name,Username,PIN,Level',
+            ...logins.map(l => [l.name, l.username, l.pin, l.level].map(_csvEsc).join(','))
+        ].join('\n');
+        navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard!'), () => alert('Copy failed — try selecting the table manually.'));
+    });
+
+    document.getElementById('exportLoginsBtn').addEventListener('click', () => {
+        const logins = dashboard.getAllStudentLogins();
+        const csv = ['Name,Username,PIN,Level,Status',
+            ...logins.map(l => [l.name, l.username, l.pin, l.level, l.status].map(_csvEsc).join(','))
+        ].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = 'student-logins.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    // ── Bulk import ───────────────────────────────────────────────────────────
+
+    document.getElementById('importBtn').addEventListener('click', () => {
+        const data = document.getElementById('bulkInput').value.trim();
+        if (!data) { alert('Paste CSV or JSON data first.'); return; }
+        const format = document.getElementById('importFormat').value;
+        const resultDiv = document.getElementById('importResult');
+        try {
+            const { added, skipped, errors } = dashboard.bulkImportStudents(data, format);
+            const lines = [];
+            if (added.length)   lines.push(`✅ Added ${added.length} student(s).`);
+            if (skipped.length) lines.push(`⚠️ Skipped ${skipped.length} duplicate(s): ${skipped.join(', ')}`);
+            if (errors.length)  lines.push(`❌ Errors: ${errors.join('; ')}`);
+            resultDiv.innerHTML = lines.join('<br>');
+            resultDiv.className = errors.length ? 'alert-box alert-error' : 'alert-box alert-success';
+            refresh();
+        } catch (error) {
+            resultDiv.textContent = `Import failed: ${error.message}`;
+            resultDiv.className = 'alert-box alert-error';
+        }
+    });
+
+    // ── Class controls ────────────────────────────────────────────────────────
+
+    document.getElementById('pauseClassBtn').addEventListener('click', () => {
+        localStorage.setItem(PAUSE_STATE_KEY, JSON.stringify({ paused: true }));
+        refresh();
+    });
+
+    document.getElementById('resumeClassBtn').addEventListener('click', () => {
+        localStorage.setItem(PAUSE_STATE_KEY, JSON.stringify({ paused: false }));
+        refresh();
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', refresh);
+
+    // ── Leaderboard tabs ──────────────────────────────────────────────────────
+
+    document.querySelectorAll('.tab-bar button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-bar button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentLeaderboardFilter = btn.dataset.filter;
+            renderLeaderboard(currentLeaderboardFilter);
+        });
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    refresh();
+</script>
 </body>
 </html>

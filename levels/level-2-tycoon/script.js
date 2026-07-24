@@ -3,8 +3,8 @@
  * Levels 2–5 progression condensed into one playable mode.
  */
 
-const CLASS_RECORDS_KEY = 'wa_gold_rush_class_records';
-const PAUSE_STATE_KEY = 'wa_gold_rush_pause_state';
+const CLASS_RECORDS_KEY  = 'wa_gold_rush_class_records';
+const PAUSE_STATE_KEY    = 'wa_gold_rush_pause_state';
 const PLAYER_KEY_STORAGE = 'wa_gold_rush_player_key';
 const DEFAULT_COMPANY_NAME = 'Untitled Mining Co.';
 const RANDOM_EVENT_MIN_LEVEL = 4;
@@ -611,11 +611,12 @@ function displayResults(results, totalProfit, eventMessage) {
 }
 
 function saveIdentity(showAlert = true) {
-    gameState.player.studentId = document.getElementById('studentIdInput').value.trim();
+    gameState.player.studentId   = document.getElementById('studentIdInput').value.trim();
     gameState.player.studentName = document.getElementById('studentNameInput').value.trim();
     gameState.player.companyName = document.getElementById('companyNameInput').value.trim() || DEFAULT_COMPANY_NAME;
     gameState.saveToLocalStorage();
     updateAllUI();
+    updateIdentityBanner();
     syncPlayerRecord();
     if (showAlert) {
         alert('Identity saved.');
@@ -624,31 +625,83 @@ function saveIdentity(showAlert = true) {
 
 function hydrateIdentityInputs() {
     const suggested = gameState.gameConfig.company?.suggestedNames || [];
+
+    // Prefer student session from shared key (set by teacher when assigning login)
+    const session = getPlayerSession();
+    if (session && session.studentId && !gameState.player.studentId) {
+        gameState.player.studentId   = session.studentId;
+        gameState.player.studentName = session.studentName || gameState.player.studentName;
+        gameState.player.companyName = session.companyName || gameState.player.companyName;
+    }
+
     if (!gameState.player.companyName || gameState.player.companyName === DEFAULT_COMPANY_NAME) {
         gameState.player.companyName = suggested[0] || DEFAULT_COMPANY_NAME;
     }
-    document.getElementById('studentIdInput').value = gameState.player.studentId || '';
+    document.getElementById('studentIdInput').value   = gameState.player.studentId   || '';
     document.getElementById('studentNameInput').value = gameState.player.studentName || '';
     document.getElementById('companyNameInput').value = gameState.player.companyName || '';
+
+    // Show identity bar if session exists
+    updateIdentityBanner();
+}
+
+function updateIdentityBanner() {
+    const banner = document.getElementById('student-identity-banner');
+    if (!banner) return;
+    const name = gameState.player.studentName || '';
+    const level = gameState.assignedLevel || 2;
+    if (name) {
+        banner.textContent = `👤 ${name} — Level ${level} Goldfields Venture`;
+        banner.classList.remove('hidden');
+    } else {
+        banner.classList.add('hidden');
+    }
 }
 
 function getOrCreatePlayerKey() {
-    let key = localStorage.getItem(PLAYER_KEY_STORAGE);
-    if (!key) {
-        key = (typeof crypto !== 'undefined' && crypto.randomUUID)
-            ? crypto.randomUUID()
-            : `player_${Date.now()}_${(() => {
-                if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-                    return Array.from(crypto.getRandomValues(new Uint32Array(2))).join('_');
-                }
-                return `${Math.random().toString(36).slice(2, 12)}_${Math.random().toString(36).slice(2, 12)}`;
-            })()}`;
-        localStorage.setItem(PLAYER_KEY_STORAGE, key);
+    // If a full session object exists (set by teacher dashboard or login), return the studentId.
+    // Otherwise fall back to a plain UUID stored at the same key.
+    try {
+        const raw = localStorage.getItem(PLAYER_KEY_STORAGE);
+        if (!raw) {
+            // Create a new anonymous session key
+            const key = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : `player_${Date.now()}_${Math.random().toString(36).slice(2, 12)}`;
+            localStorage.setItem(PLAYER_KEY_STORAGE, key);
+            return key;
+        }
+        // Try to parse as JSON session object
+        try {
+            const session = JSON.parse(raw);
+            if (session && typeof session === 'object' && session.studentId) {
+                return session.studentId;
+            }
+        } catch (e) { /* not JSON — treat as plain key */ }
+        return raw;
+    } catch (e) {
+        return 'anonymous';
     }
-    return key;
+}
+
+function getPlayerSession() {
+    try {
+        const raw = localStorage.getItem(PLAYER_KEY_STORAGE);
+        if (!raw) return null;
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') return parsed;
+        } catch (e) { /* plain string */ }
+        return null;
+    } catch (e) {
+        return null;
+    }
 }
 
 function getClassRecords() {
+    if (typeof LeaderboardStore !== 'undefined') {
+        return LeaderboardStore.loadLeaderboardStore().entries;
+    }
     try {
         const records = JSON.parse(localStorage.getItem(CLASS_RECORDS_KEY));
         return Array.isArray(records) ? records : [];
@@ -658,6 +711,10 @@ function getClassRecords() {
 }
 
 function saveClassRecords(records) {
+    if (typeof LeaderboardStore !== 'undefined') {
+        LeaderboardStore.saveLeaderboardStore({ version: 2, entries: records });
+        return;
+    }
     localStorage.setItem(CLASS_RECORDS_KEY, JSON.stringify(records));
 }
 
@@ -679,29 +736,48 @@ function calculateStrategyLabel() {
 
 function syncPlayerRecord() {
     const playerKey = getOrCreatePlayerKey();
-    const records = getClassRecords();
+    const session   = getPlayerSession();
     const totalRounds = Math.max(1, gameState.round - 1);
-    const record = {
+
+    // Build a unified v2 leaderboard entry
+    const entry = {
+        entryId:        null, // will be assigned/preserved by LeaderboardStore
         playerKey,
-        studentId: gameState.player.studentId || playerKey,
-        studentName: gameState.player.studentName || 'Anonymous Student',
-        companyName: gameState.player.companyName || DEFAULT_COMPANY_NAME,
-        round: gameState.round,
-        cash: gameState.cash,
-        netWorth: gameState.getNetWorth(),
-        minesOwned: gameState.getOwnedMines().length,
-        machineryOwned: gameState.machinery.length,
-        totalProfitLoss: gameState.totalProfitLoss,
+        studentId:      gameState.player.studentId || playerKey,
+        studentName:    gameState.player.studentName || (session?.studentName) || 'Anonymous Student',
+        username:       gameState.player.studentId  || (session?.username)    || '',
+        level:          gameState.assignedLevel || 2,
+        mode:           'goldfields-venture',
+        source:         'level2',
+        score:          gameState.getNetWorth(),
+        netWorth:       gameState.getNetWorth(),
+        finalCash:      gameState.cash,
+        roundsPlayed:   totalRounds,
+        minesOwned:     gameState.getOwnedMines().length,
+        machineryCount: gameState.machinery.length,
+        companyName:    gameState.player.companyName || DEFAULT_COMPANY_NAME,
+        // legacy fields kept for teacher dashboard compatibility
+        round:              gameState.round,
+        cash:               gameState.cash,
+        totalProfitLoss:    gameState.totalProfitLoss,
         averageRoundProfit: gameState.totalProfitLoss / totalRounds,
-        strategyLabel: calculateStrategyLabel(),
-        updatedAt: new Date().toISOString()
+        strategyLabel:      calculateStrategyLabel(),
+        machineryOwned:     gameState.machinery.length,
+        timestamp:          new Date().toISOString(),
+        updatedAt:          new Date().toISOString()
     };
 
-    const index = records.findIndex(r => r.playerKey === playerKey);
-    if (index >= 0) records[index] = record;
-    else records.push(record);
-    saveClassRecords(records);
-    syncTeacherDashboardRecord(record);
+    if (typeof LeaderboardStore !== 'undefined') {
+        LeaderboardStore.appendEntry(entry);
+    } else {
+        const records = getClassRecords();
+        const index = records.findIndex(r => (r.studentId || r.playerKey) === playerKey);
+        if (index >= 0) records[index] = entry;
+        else records.push(entry);
+        saveClassRecords(records);
+    }
+
+    syncTeacherDashboardRecord(entry);
 }
 
 function syncTeacherDashboardRecord(record) {
