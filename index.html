@@ -464,8 +464,7 @@
 
             sessionStorage.setItem(STUDENT_SESSION_KEY, JSON.stringify({
                 studentId: matched.id,
-                studentName: matched.name,
-                loggedInAt: new Date().toISOString()
+                studentName: matched.name
             }));
             renderCompetitionSessionStatus();
         });

@@ -135,7 +135,7 @@ function setupEventListeners() {
         if (event.key === PAUSE_STATE_KEY) {
             updatePauseStateFromStorage();
         }
-        if (event.key === STRICT_MODE_KEY || event.key === TEACHER_DASHBOARD_KEY || event.key === CLASS_RECORDS_KEY) {
+        if ((event.key === STRICT_MODE_KEY) || (event.key === TEACHER_DASHBOARD_KEY) || (event.key === CLASS_RECORDS_KEY)) {
             applyCompetitionSessionToIdentity(false);
             updateCompetitionStatus();
             renderLeaderboard();
@@ -312,8 +312,9 @@ function renderFeaturesAndCosts() {
 
 function renderLeaderboard() {
     const competition = getCompetitionContext();
+    const isCompetitionLocked = !competition.canUseCompetitionFeatures;
     const lockMessage = document.getElementById('competition-lock-message');
-    if (competition.strictModeEnabled && !competition.isLoggedIn) {
+    if (isCompetitionLocked) {
         lockMessage.textContent = 'Login required for competition features in Strict Classroom Mode. You can continue playing and saving your progress without competition features.';
         lockMessage.classList.remove('hidden');
         document.getElementById('leaderboard-summary').textContent = 'Competition leaderboard is locked until you log in from Home.';
